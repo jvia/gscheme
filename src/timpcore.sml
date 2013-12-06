@@ -1839,8 +1839,8 @@ fun typeof (e, globals, functions, formals) =
           (* Exercise [->]. [*]                           *)
           (* <function [[ty]], to check the type of an expression, given $\itenvs$ (
                                                                (prototype))>= *)
-          | ty (AGET (a, i))       = raise LeftAsExercise "AGET"
-          | ty (ASET (a, i, e))    = raise LeftAsExercise "ASET"
+          | ty (AGET (a, i))       = raise LeftAsExercise "AGET: from (ARRAYTY ta)u returns tau"
+          | ty (ASET (a, i, e))    = raise LeftAsExercise "ASET: from (ARRAYTY tau) returns tau" 
           | ty (AMAKE (len, init)) =
             let val (tau1, tau2) = (ty len, ty init)
             in if eqType (tau1, INTTY) then
@@ -1848,7 +1848,7 @@ fun typeof (e, globals, functions, formals) =
                else
                    raise TypeError ("Expected length of type int but got " ^ typeString tau1)
             end
-          | ty (ALEN a)            = raise LeftAsExercise "ALEN"
+          | ty (ALEN a)            = xraise LeftAsExercise "ALEN: returns an INTTY if everything checks"
         (* Type checking                                *)
         (*                                              *)
         (* Given an expression e and a collection of type *)

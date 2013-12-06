@@ -1848,7 +1848,13 @@ fun typeof (e, globals, functions, formals) =
                else
                    raise TypeError ("Expected length of type int but got " ^ typeString tau1)
             end
-          | ty (ALEN a)            = xraise LeftAsExercise "ALEN: returns an INTTY if everything checks"
+          | ty (ALEN a)            = 
+            let val tau = ty a
+            in if isArray tau then
+                   INTTY
+               else
+                   raise TypeError ("Expected array but got " ^ typeString tau)
+            end
         (* Type checking                                *)
         (*                                              *)
         (* Given an expression e and a collection of type *)

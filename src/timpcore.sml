@@ -87,8 +87,7 @@ and eqTypes ([],      [])      = true
   | eqTypes (t1::ts1, t2::ts2) = eqType (t1, t2) andalso eqTypes (ts1, ts2)
   | eqTypes (_,       _)       = false
 fun isArray (ARRAYTY _) = true
-  | isArray _ = false
-
+  | isArray _           = false
 
 (*****************************************************************)
 (*                                                               *)
@@ -1691,6 +1690,10 @@ fun use readEvalPrint syntax filename rho =
 
 (* <type checking for \timpcore>=               *)
 exception TypeError of string
+
+fun arrayTy (ARRAYTY tau) = tau
+  | arrayTy _             = raise TypeError "Not an array"
+
 fun typeof (e, globals, functions, formals) =
     let (* All literals are integers. \usetyLiteral     *)
         (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
@@ -1839,8 +1842,18 @@ fun typeof (e, globals, functions, formals) =
           (* Exercise [->]. [*]                           *)
           (* <function [[ty]], to check the type of an expression, given $\itenvs$ (
                                                                (prototype))>= *)
-          | ty (AGET (a, i))       = raise LeftAsExercise "AGET: from (ARRAYTY ta)u returns tau"
-          | ty (ASET (a, i, e))    = raise LeftAsExercise "ASET: from (ARRAYTY tau) returns tau" 
+          | ty (AGET (a, i))       =
+            let val (tau1, tau2) = (ty a, ty i)
+            in if isArray tau1 then
+                   if eqType (tau2, INTTY) then
+                       arrayTy tau1
+                   else
+                       raise TypeError ("Index must be of type INT but got " ^ typeString tau2 )                       
+               else
+                   raise TypeError ("Expected an array but got " ^ typeString tau1 )
+            end
+          | ty (ASET (a, i, e))    =
+            raise LeftAsExercise "ASET: from (ARRAYTY tau) returns tau" 
           | ty (AMAKE (len, init)) =
             let val (tau1, tau2) = (ty len, ty init)
             in if eqType (tau1, INTTY) then

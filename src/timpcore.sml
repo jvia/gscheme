@@ -86,6 +86,8 @@ fun eqType (INTTY,      INTTY)  = true
 and eqTypes ([],      [])      = true
   | eqTypes (t1::ts1, t2::ts2) = eqType (t1, t2) andalso eqTypes (ts1, ts2)
   | eqTypes (_,       _)       = false
+fun isArray (ARRAYTY _) = true
+  | isArray _ = false
 
 
 (*****************************************************************)
@@ -134,11 +136,11 @@ type 'a susp = 'a action ref
 
 fun delay f = ref (PENDING f)
 fun force cell =
-  case !cell
-    of PENDING f =>  let val result = f ()
-                     in  (cell := PRODUCED result; result)
-                     end
-     | PRODUCED v => v
+    case !cell
+     of PENDING f =>  let val result = f ()
+                      in  (cell := PRODUCED result; result)
+                      end
+      | PRODUCED v => v
 (* <boxed values 26>=                           *)
 val _ = op delay : (unit -> 'a) -> 'a susp
 val _ = op force : 'a susp -> 'a
@@ -188,7 +190,7 @@ fun streamGet EOS = NONE
   | streamGet (SUSPENDED s) = streamGet (force s)
 (* <streams>=                                   *)
 fun streamOfList xs = 
-  foldr (op :::) EOS xs
+    foldr (op :::) EOS xs
 (* <boxed values 27>=                           *)
 val _ = op streamGet : 'a stream -> ('a * 'a stream) option
 (* The simplest way to create a stream is by using the *)
@@ -199,12 +201,12 @@ val _ = op streamGet : 'a stream -> ('a * 'a stream) option
 val _ = op streamOfList : 'a list -> 'a stream
 (* <streams>=                                   *)
 fun listOfStream xs =
-  case streamGet xs
-    of NONE => []
-     | SOME (x, xs) => x :: listOfStream xs
+    case streamGet xs
+     of NONE => []
+      | SOME (x, xs) => x :: listOfStream xs
 (* <streams>=                                   *)
 fun delayedStream action = 
-  SUSPENDED (delay action)
+    SUSPENDED (delay action)
 (* <boxed values 28>=                           *)
 val _ = op listOfStream : 'a stream -> 'a list
 (* The more interesting streams are those that result *)
@@ -215,8 +217,8 @@ val _ = op listOfStream : 'a stream -> 'a list
 val _ = op delayedStream : (unit -> 'a stream) -> 'a stream
 (* <streams>=                                   *)
 fun streamOfEffects next =
-  delayedStream (fn () => case next () of NONE => EOS
-                                        | SOME a => a ::: streamOfEffects next)
+    delayedStream (fn () => case next () of NONE => EOS
+                                          | SOME a => a ::: streamOfEffects next)
 (* Creating streams using actions and functions *)
 (*                                              *)
 (* Function [[streamOfEffects]] produces the stream of *)
@@ -229,13 +231,13 @@ val _ = op streamOfEffects : (unit -> 'a option) -> 'a stream
 (* <streams>=                                   *)
 type line = string
 fun streamOfLines infile = 
-  streamOfEffects (fn () => TextIO.inputLine infile)
+    streamOfEffects (fn () => TextIO.inputLine infile)
 (* <boxed values 30>=                           *)
 type line = line
 val _ = op streamOfLines : TextIO.instream -> line stream
 (* <streams>=                                   *)
 fun streamRepeat x =
-  delayedStream (fn () => x ::: streamRepeat x)
+    delayedStream (fn () => x ::: streamRepeat x)
 (* Where [[streamOfEffects]] produces the results of *)
 (* repeating a single action again and again,   *)
 (* [[streamRepeat]] simply repeats a single value again *)
@@ -253,10 +255,10 @@ fun streamRepeat x =
 val _ = op streamRepeat : 'a -> 'a stream
 (* <streams>=                                   *)
 fun streamOfUnfold next state =
-  delayedStream (fn () => case next state
-                            of NONE => EOS
-                             | SOME (a, state) => a ::: streamOfUnfold next
-                                                                          state)
+    delayedStream (fn () => case next state
+                             of NONE => EOS
+                              | SOME (a, state) => a ::: streamOfUnfold next
+                                                     state)
 (* A more sophisticated way to produce a stream is to *)
 (* use a function that depends on an evolving state of *)
 (* some unknown type [['b]]. The function is applied to *)
@@ -284,7 +286,7 @@ val _ = op streamOfUnfold : ('b -> ('a * 'b) option) -> 'b -> 'a stream
 
 (* <streams>=                                   *)
 fun preStream (pre, xs) = 
-  streamOfUnfold (fn xs => (pre (); streamGet xs)) xs
+    streamOfUnfold (fn xs => (pre (); streamGet xs)) xs
 (* It's also useful to be able to perform an action *)
 (* immediately after getting an element from a stream. *)
 (* In [[postStream]], I perform the action only if the *)
@@ -295,9 +297,9 @@ fun preStream (pre, xs) =
 
 (* <streams>=                                   *)
 fun postStream (xs, post) =
-  streamOfUnfold (fn xs => case streamGet xs
-                             of NONE => NONE
-                              | head as SOME (x, _) => (post x; head)) xs
+    streamOfUnfold (fn xs => case streamGet xs
+                              of NONE => NONE
+                               | head as SOME (x, _) => (post x; head)) xs
 (* Given an action called [[pre]] and a stream xs, *)
 (* I define a stream \monopreStream (pre, xs) that adds *)
 (* [[pre ()]] to the action performed by the stream. *)
@@ -315,9 +317,9 @@ val _ = op preStream : (unit -> unit) * 'a stream -> 'a stream
 val _ = op postStream : 'a stream * ('a -> unit) -> 'a stream
 (* <streams>=                                   *)
 fun streamMap f xs =
-  delayedStream (fn () => case streamGet xs
-                            of NONE => EOS
-                             | SOME (x, xs) => f x ::: streamMap f xs)
+    delayedStream (fn () => case streamGet xs
+                             of NONE => EOS
+                              | SOME (x, xs) => f x ::: streamMap f xs)
 (* Standard list functions ported to streams    *)
 (*                                              *)
 (* Functions like [[map]], [[filter]], [[fold]], *)
@@ -327,17 +329,17 @@ fun streamMap f xs =
 val _ = op streamMap : ('a -> 'b) -> 'a stream -> 'b stream
 (* <streams>=                                   *)
 fun streamFilter p xs =
-  delayedStream (fn () => case streamGet xs
-                            of NONE => EOS
-                             | SOME (x, xs) => if p x then x ::: streamFilter p
-                                                                              xs
-                                               else streamFilter p xs)
+    delayedStream (fn () => case streamGet xs
+                             of NONE => EOS
+                              | SOME (x, xs) => if p x then x ::: streamFilter p
+                                                              xs
+                                                else streamFilter p xs)
 (* <boxed values 35>=                           *)
 val _ = op streamFilter : ('a -> bool) -> 'a stream -> 'a stream
 (* <streams>=                                   *)
 fun streamFold f z xs =
-  case streamGet xs of NONE => z
-                     | SOME (x, xs) => streamFold f (f (x, z)) xs
+    case streamGet xs of NONE => z
+                       | SOME (x, xs) => streamFold f (f (x, z)) xs
 (* The only sensible order in which to fold the elements *)
 (* of a stream is the order in which the actions are *)
 (* taken and the results are produced: from left to *)
@@ -347,20 +349,20 @@ val _ = op streamFold : ('a * 'b -> 'b) -> 'b -> 'a stream -> 'b
 
 (* <streams>=                                   *)
 fun streamZip (xs, ys) =
-  delayedStream
-  (fn () => case (streamGet xs, streamGet ys)
-              of (SOME (x, xs), SOME (y, ys)) => (x, y) ::: streamZip (xs, ys)
-               | _ => EOS)
+    delayedStream
+        (fn () => case (streamGet xs, streamGet ys)
+                   of (SOME (x, xs), SOME (y, ys)) => (x, y) ::: streamZip (xs, ys)
+                    | _ => EOS)
 (* <streams>=                                   *)
 fun streamConcat xss =
-  let fun get (xs, xss) =
-        case streamGet xs
-          of SOME (x, xs) => SOME (x, (xs, xss))
-           | NONE => case streamGet xss
-                       of SOME (xs, xss) => get (xs, xss)
-                        | NONE => NONE
-  in  streamOfUnfold get (EOS, xss)
-  end
+    let fun get (xs, xss) =
+            case streamGet xs
+             of SOME (x, xs) => SOME (x, (xs, xss))
+              | NONE => case streamGet xss
+                         of SOME (xs, xss) => get (xs, xss)
+                          | NONE => NONE
+    in  streamOfUnfold get (EOS, xss)
+    end
 (* Function [[streamZip]] returns a stream that is as *)
 (* long as the shorter of the two argument streams. *)
 (* In particular, if [[streamZip]] is applied to a *)
@@ -444,15 +446,15 @@ fun e >>=+ k'  =  e >>= OK o k'
 val _ = op >>=+ : 'a error * ('a -> 'b) -> 'b error
 (* <error handling>=                            *)
 fun errorList es =
-  let fun cons (OK x, OK xs) = OK (x :: xs)
-        | cons (ERROR m1, ERROR m2) = ERROR (m1 ^ "; " ^ m2)
-        | cons (ERROR m, OK _) = ERROR m
-        | cons (OK _, ERROR m) = ERROR m
-  in  foldr cons (OK []) es
-  end
+    let fun cons (OK x, OK xs) = OK (x :: xs)
+          | cons (ERROR m1, ERROR m2) = ERROR (m1 ^ "; " ^ m2)
+          | cons (ERROR m, OK _) = ERROR m
+          | cons (OK _, ERROR m) = ERROR m
+    in  foldr cons (OK []) es
+    end
 (* <parsing combinators>=                       *)
 type ('a, 'b) xformer = 
-  'a stream -> ('b error * 'a stream) option
+     'a stream -> ('b error * 'a stream) option
 (* Sometimes a whole list of results are checked for *)
 (* errors independently and then must be combined. *)
 (* I call the combining operation [[errorList]]. [ *)
@@ -500,14 +502,14 @@ val _ = op pure : 'b -> ('a, 'b) xformer
 (* <parsing combinators>=                       *)
 infix 3 <*>
 fun tx_f <*> tx_b =
-  fn xs => case tx_f xs
-             of NONE => NONE
-              | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
-              | SOME (OK f, xs) =>
-                  case tx_b xs
-                    of NONE => NONE
-                     | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
-                     | SOME (OK y, xs) => SOME (OK (f y), xs)
+    fn xs => case tx_f xs
+              of NONE => NONE
+               | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
+               | SOME (OK f, xs) =>
+                 case tx_b xs
+                  of NONE => NONE
+                   | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
+                   | SOME (OK y, xs) => SOME (OK (f y), xs)
 (* For the combination [[tx_f <*> tx_b]] to succeed, *)
 (* both [[tx_f]] and [[tx_b]] must succeed. So I use *)
 (* nested case analysis.                        *)
@@ -583,8 +585,8 @@ val _ = op  *> : ('a, 'b) xformer * ('a, 'c) xformer -> ('a, 'c) xformer
 val _ = op <$  : 'b               * ('a, 'c) xformer -> ('a, 'b) xformer
 (* <parsing combinators>=                       *)
 fun one xs = case streamGet xs
-               of NONE => NONE
-                | SOME (x, xs) => SOME (OK x, xs)
+              of NONE => NONE
+               | SOME (x, xs) => SOME (OK x, xs)
 (* The simplest input-inspecting parser is [[one]]. It's *)
 (* an \atoa transformer that succeeds if and only if *)
 (* there is a value in the input. If there's no value *)
@@ -593,8 +595,8 @@ fun one xs = case streamGet xs
 val _ = op one : ('a, 'a) xformer
 (* <parsing combinators>=                       *)
 fun eos xs = case streamGet xs
-               of NONE => SOME (OK (), EOS)
-                | SOME _ => NONE
+              of NONE => SOME (OK (), EOS)
+               | SOME _ => NONE
 (* The counterpart of [[one]] is a parser that succeeds *)
 (* if and only if there is no input?that is, if we have *)
 (* reached the end of the stream. This parser, which is *)
@@ -620,9 +622,9 @@ fun rewind tx xs = case tx xs of SOME (ey, _) => SOME (ey, xs)
 val _ = op rewind : ('a, 'b) xformer -> ('a, 'b) xformer
 (* <parsing combinators>=                       *)
 fun sat p tx xs =
-  case tx xs
-    of answer as SOME (OK y, xs) => if p y then answer else NONE
-     | answer => answer
+    case tx xs
+     of answer as SOME (OK y, xs) => if p y then answer else NONE
+      | answer => answer
 (* <boxed values 53>=                           *)
 val _ = op sat : ('b -> bool) -> ('a, 'b) xformer -> ('a, 'b) xformer
 (* <parsing combinators>=                       *)
@@ -632,13 +634,13 @@ val _ = op oneEq : ''a -> (''a, ''a) xformer
 (* <parsing combinators>=                       *)
 infixr 4 <$>?
 fun f <$>? tx =
-  fn xs => case tx xs
-             of NONE => NONE
-              | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
-              | SOME (OK y, xs) =>
-                  case f y
-                    of NONE => NONE
-                     | SOME z => SOME (OK z, xs)
+    fn xs => case tx xs
+              of NONE => NONE
+               | SOME (ERROR msg, xs) => SOME (ERROR msg, xs)
+               | SOME (OK y, xs) =>
+                 case f y
+                  of NONE => NONE
+                   | SOME z => SOME (OK z, xs)
 (* A more subtle condition is that a partial function *)
 (* can turn an input into something we're looking for. *)
 (* If we have an \atob transformer, and we compose it *)
@@ -652,22 +654,22 @@ val _ = op <$>? : ('b -> 'c option) * ('a, 'b) xformer -> ('a, 'c) xformer
 (* <parsing combinators>=                       *)
 infix 3 <&>
 fun t1 <&> t2 = fn xs =>
-  case t1 xs
-    of SOME (OK _, _) => t2 xs
-     | SOME (ERROR _, _) => NONE    
-     | NONE => NONE
+                   case t1 xs
+                    of SOME (OK _, _) => t2 xs
+                     | SOME (ERROR _, _) => NONE    
+                     | NONE => NONE
 (* <boxed values 56>=                           *)
 val _ = op <&> : ('a, 'b) xformer * ('a, 'c) xformer -> ('a, 'c) xformer
 (* <parsing combinators>=                       *)
 fun notFollowedBy t xs =
-  case t xs
-    of NONE => SOME (OK (), xs)
-     | SOME _ => NONE
+    case t xs
+     of NONE => SOME (OK (), xs)
+      | SOME _ => NONE
 (* <boxed values 57>=                           *)
 val _ = op notFollowedBy : ('a, 'b) xformer -> ('a, unit) xformer
 (* <parsing combinators>=                       *)
 fun many t = 
-  curry (op ::) <$> t <*> (fn xs => many t xs) <|> pure []
+    curry (op ::) <$> t <*> (fn xs => many t xs) <|> pure []
 (* Parsers for sequences                        *)
 (*                                              *)
 (* Inputs are full of sequences. A function takes a *)
@@ -692,7 +694,7 @@ val _ = op many  : ('a, 'b) xformer -> ('a, 'b list) xformer
 
 (* <parsing combinators>=                       *)
 fun many1 t = 
-  curry (op ::) <$> t <*> many t
+    curry (op ::) <$> t <*> many t
 (* Sometimes an empty list isn't acceptable. In that *)
 (* case, use [[many1 t]], which succeeds only if [[t]] *)
 (* succeeds at least once.                      *)
@@ -703,7 +705,7 @@ val _ = op many1 : ('a, 'b) xformer -> ('a, 'b list) xformer
 
 (* <parsing combinators>=                       *)
 fun optional t = 
-  SOME <$> t <|> pure NONE
+    SOME <$> t <|> pure NONE
 (* Sometimes instead of zero, one, or many B's, we just *)
 (* one zero or one; such a B might be called    *)
 (* ``optional.'' For example, a numeric literal begins *)
@@ -716,11 +718,11 @@ val _ = op optional : ('a, 'b) xformer -> ('a, 'b option) xformer
 (* <parsing combinators>=                       *)
 infix 2 <*>!
 fun tx_ef <*>! tx_x =
-  fn xs => case (tx_ef <*> tx_x) xs
-             of NONE => NONE
-              | SOME (OK (OK y),      xs) => SOME (OK y,      xs)
-              | SOME (OK (ERROR msg), xs) => SOME (ERROR msg, xs)
-              | SOME (ERROR msg,      xs) => SOME (ERROR msg, xs)
+    fn xs => case (tx_ef <*> tx_x) xs
+              of NONE => NONE
+               | SOME (OK (OK y),      xs) => SOME (OK y,      xs)
+               | SOME (OK (ERROR msg), xs) => SOME (ERROR msg, xs)
+               | SOME (ERROR msg,      xs) => SOME (ERROR msg, xs)
 infixr 4 <$>!
 fun ef <$>! tx_x = pure ef <*>! tx_x
 (* Transformers made with [[many]] and [[optional]] *)
@@ -815,9 +817,9 @@ val whitespace = many (sat Char.isSpace one)
 val _ = op whitespace : char list lexer
 (* <support for lexical analysis>=              *)
 fun intChars isDelim = 
-  (curry (op ::) <$> oneEq #"-" <|> pure id) <*> many1 (sat Char.isDigit one) <*
-                                                                                
-  notFollowedBy (sat (not o isDelim) one)
+    (curry (op ::) <$> oneEq #"-" <|> pure id) <*> many1 (sat Char.isDigit one) <*
+                                               
+                                               notFollowedBy (sat (not o isDelim) one)
 (* The rules for integer literals are as follows: *)
 (*                                              *)
 (*   * The integer literal may begin with a minus sign. *)
@@ -840,11 +842,11 @@ fun intChars isDelim =
 val _ = op intChars     : (char -> bool) -> char list lexer
 (* <support for lexical analysis>=              *)
 fun intFromChars (#"-" :: cs) = 
-      intFromChars cs >>=+ ~
+    intFromChars cs >>=+ ~
   | intFromChars cs =
-      (OK o valOf o Int.fromString o implode) cs
-      handle Overflow => ERROR
-                        "this interpreter can't read arbitrarily large integers"
+    (OK o valOf o Int.fromString o implode) cs
+    handle Overflow => ERROR
+                           "this interpreter can't read arbitrarily large integers"
 (* Function [[intFromChars]] works by combining three *)
 (* functions from Standard ML's initial basis. Function *)
 (* [[implode]] converts to string; [[Int.fromString]] *)
@@ -857,7 +859,7 @@ fun intFromChars (#"-" :: cs) =
 val _ = op intFromChars : char list -> int error
 (* <support for lexical analysis>=              *)
 fun intToken isDelim =
-  intFromChars <$>! intChars isDelim
+    intFromChars <$>! intChars isDelim
 (* <boxed values 67>=                           *)
 val _ = op intToken : (char -> bool) -> int lexer
 (* <support for parsing>=                       *)
@@ -870,10 +872,10 @@ val _ = op intToken : (char -> bool) -> int lexer
 (* <support for parsing>=                       *)
 type srcloc = string * int
 fun srclocString (source, line) =
-  source ^ ", line " ^ Int.toString line
+    source ^ ", line " ^ Int.toString line
 (* <support for parsing>=                       *)
 fun errorAt msg loc =
-  ERROR (msg ^ " in " ^ srclocString loc)
+    ERROR (msg ^ " in " ^ srclocString loc)
 (* <support for parsing>=                       *)
 type 'a located = srcloc * 'a
 (* Parsers: reading tokens and source-code locations *)
@@ -926,10 +928,10 @@ val _ = op errorAt : string -> srcloc -> 'a error
 type 'a located = 'a located
 (* <support for parsing>=                       *)
 fun locatedStream (streamname, inputs) =
-  let val locations = streamZip (streamRepeat streamname,
-                                 streamOfUnfold (fn n => SOME (n, n+1)) 1)
-  in  streamZip (locations, inputs)
-  end
+    let val locations = streamZip (streamRepeat streamname,
+                                   streamOfUnfold (fn n => SOME (n, n+1)) 1)
+    in  streamZip (locations, inputs)
+    end
 (* All locations originate in a located stream of lines. *)
 (* The locations share a filename, and the line numbers *)
 (* are 1, 2, 3, ... and so on.                  *)
@@ -948,13 +950,13 @@ fun drainLine EOS = EOS
 type 'a parser = (token located inline, 'a) xformer
 (* <parsing utilities>=                         *)
 local 
-  fun asEol (EOL n) = SOME n
-    | asEol (INLINE _) = NONE
-  fun asInline (INLINE x) = SOME x
-    | asInline (EOL _)    = NONE
+    fun asEol (EOL n) = SOME n
+      | asEol (INLINE _) = NONE
+    fun asInline (INLINE x) = SOME x
+      | asInline (EOL _)    = NONE
 in
-  fun eol    xs = (asEol <$>? one) xs
-  fun inline xs = (many eol *> asInline <$>? one) xs
+fun eol    xs = (asEol <$>? one) xs
+fun inline xs = (many eol *> asInline <$>? one) xs
 end
 
 val token    =         snd <$> inline  : token parser
@@ -1051,15 +1053,15 @@ val _ = op <?> : 'a parser * string -> 'a parser
 (* <parsing utilities>=                         *)
 infix 4 <!>
 fun p <!> msg =
-  fn tokens => (case p tokens
-                  of SOME (OK _, unused) =>
-                       (case peek srcloc tokens
-                          of SOME loc => SOME (errorAt msg loc, unused)
-                           | NONE => NONE)
-                   | _ => NONE)
+    fn tokens => (case p tokens
+                   of SOME (OK _, unused) =>
+                      (case peek srcloc tokens
+                        of SOME loc => SOME (errorAt msg loc, unused)
+                         | NONE => NONE)
+                    | _ => NONE)
 (* <parsing utilities>=                         *)
 fun literal s =
-  ignore <$> sat (isLiteral s) token
+    ignore <$> sat (isLiteral s) token
 (* Another common error-detecting technique is to use a *)
 (* parser [[p]] to detect some input that shouldn't be *)
 (* there. We can't simply combine [[p]] with [[errorAt]] *)
@@ -1093,7 +1095,7 @@ val _ = op literal : string -> unit parser
 (* <parsing utilities>=                         *)
 infix  6 --<
 infixr 7 >-- 
-    (* if we want to mix these operators, they can't have equal precedence *)
+(* if we want to mix these operators, they can't have equal precedence *)
 fun (a >-- p) = literal a *> p
 fun (p --< a) = p <* literal a
 (* When it succeeds, the [[literal]] parser returns the *)
@@ -1113,26 +1115,26 @@ val _ = op --< : 'a parser * string    -> 'a parser
 (* <parsing utilities>=                         *)
 
 fun bracket keyword expected p = 
-  "(" >-- literal keyword *> (p --< ")" <|>
-                              errorAt ("expected " ^ expected) <$>!
-                                                               scanToCloseParen)
+    "(" >-- literal keyword *> (p --< ")" <|>
+                                  errorAt ("expected " ^ expected) <$>!
+                                  scanToCloseParen)
 and scanToCloseParen tokens = 
-  let val loc = getOpt (peek srcloc tokens, ("end of stream", 9999))
-      fun scan lpcount tokens =
-        (* lpcount is the number of unmatched left parentheses *)
-        case tokens
-          of EOL _         ::: tokens => scan lpcount tokens
-           | INLINE (_, t) ::: tokens =>
-                                  if isLiteral "(" t then scan (lpcount+1)
-                                                                          tokens
-                                  else if isLiteral ")" t then
-                                      if lpcount = 0 then SOME (OK loc, tokens)
-                                      else scan (lpcount-1) tokens
-                                  else scan lpcount tokens
-           | EOS         => SOME (errorAt "unmatched (" loc, EOS)
-           | SUSPENDED s => scan lpcount (force s)
-  in  scan 0 tokens
-  end
+    let val loc = getOpt (peek srcloc tokens, ("end of stream", 9999))
+        fun scan lpcount tokens =
+            (* lpcount is the number of unmatched left parentheses *)
+            case tokens
+             of EOL _         ::: tokens => scan lpcount tokens
+              | INLINE (_, t) ::: tokens =>
+                if isLiteral "(" t then scan (lpcount+1)
+                                             tokens
+                else if isLiteral ")" t then
+                    if lpcount = 0 then SOME (OK loc, tokens)
+                    else scan (lpcount-1) tokens
+                else scan lpcount tokens
+              | EOS         => SOME (errorAt "unmatched (" loc, EOS)
+              | SUSPENDED s => scan lpcount (force s)
+    in  scan 0 tokens
+    end
 (* Bracketed expressions                        *)
 (*                                              *)
 (* Almost every language in this book uses      *)
@@ -1166,14 +1168,14 @@ val _ = op bracket          : string -> string -> 'a parser -> 'a parser
 val _ = op scanToCloseParen : srcloc parser
 (* <parsing utilities>=                         *)
 fun nodups (what, where') (loc, names) =
-  let fun dup [] = OK names
-        | dup (x::xs) = if List.exists (fn y : string => y = x) xs then
-                          errorAt (what ^ " " ^ x ^ " appears twice in " ^
-                                                                     where') loc
-                        else
-                          dup xs
-  in  dup names
-  end
+    let fun dup [] = OK names
+          | dup (x::xs) = if List.exists (fn y : string => y = x) xs then
+                              errorAt (what ^ " " ^ x ^ " appears twice in " ^
+                                       where') loc
+                          else
+                              dup xs
+    in  dup names
+    end
 (* Detection of duplicate names                 *)
 (*                                              *)
 (* Most of the languages in this book allow you to *)
@@ -1197,7 +1199,7 @@ val _ = op nodups : string * string -> srcloc * name list -> name list error
 
 (* <code used to debug parsers>=                *)
 val safeTokens : token located inline stream -> token list =
-  let fun tokens (seenEol, seenUnforced) =
+    let fun tokens (seenEol, seenUnforced) =
             let fun get (EOL _         ::: ts) = if seenUnforced then []
                                                  else tokens (true, false) ts
                   | get (INLINE (_, t) ::: ts) = t :: get ts
@@ -1207,8 +1209,8 @@ val safeTokens : token located inline stream -> token list =
                                         else tokens (false, true) (force s)
             in   get
             end
-  in  tokens (false, false)
-  end
+    in  tokens (false, false)
+    end
 (* Code used to debug parsers                   *)
 (*                                              *)
 (* When debugging parsers, I often find it helpful to *)
@@ -1222,17 +1224,17 @@ val safeTokens : token located inline stream -> token list =
 val _ = op safeTokens : token located inline stream -> token list
 (* <code used to debug parsers>=                *)
 fun wrap what p tokens =
-  let fun t tok = " " ^ tokenString tok
-      val _ = app print ["Looking for ", what, " at"]
-      val _ = app (print o t) (safeTokens tokens)
-      val _ = print "\n"
-      val answer = p tokens
-      val _ = app print [case answer of NONE => "Didn't find " | SOME _ =>
-                                                                       "Found ",
-                         what, "\n"]
-  in  answer
-  end handle e => ( app print ["Search for ", what, " raised ", exnName e, "\n"]
-                  ; raise e)
+    let fun t tok = " " ^ tokenString tok
+        val _ = app print ["Looking for ", what, " at"]
+        val _ = app (print o t) (safeTokens tokens)
+        val _ = print "\n"
+        val answer = p tokens
+        val _ = app print [case answer of NONE => "Didn't find " | SOME _ =>
+                                                                   "Found ",
+                           what, "\n"]
+    in  answer
+    end handle e => ( app print ["Search for ", what, " raised ", exnName e, "\n"]
+                    ; raise e)
 
 fun wrap what p = p 
 (* The [[wrap]] function can be used to wrap a parser; *)
@@ -1242,13 +1244,13 @@ fun wrap what p = p
 val _ = op wrap : string -> 'a parser -> 'a parser
 (* <an interactive reader>=                     *)
 fun echoTagStream lines = 
-  let fun echoIfTagged line =
-        if (String.substring (line, 0, 2) = ";#" handle _ => false) then
-          print line
-        else
-          ()
-  in  postStream (lines, echoIfTagged)
-  end
+    let fun echoIfTagged line =
+            if (String.substring (line, 0, 2) = ";#" handle _ => false) then
+                print line
+            else
+                ()
+    in  postStream (lines, echoIfTagged)
+    end
 (* Testing support                              *)
 (*                                              *)
 (* Let's get the testing support out of the way first. *)
@@ -1274,19 +1276,19 @@ fun errorln s = TextIO.output (TextIO.stdErr, s ^ "\n")
 val _ = op errorln : string -> unit
 (* <an interactive reader>=                     *)
 fun stripErrors xs =
-  let fun next xs =
-        case streamGet xs
-          of SOME (ERROR msg, xs) => (errorln ("error: " ^ msg); next xs)
-           | SOME (OK x, xs) => SOME (x, xs)
-           | NONE => NONE
-  in  streamOfUnfold next xs
-  end
+    let fun next xs =
+            case streamGet xs
+             of SOME (ERROR msg, xs) => (errorln ("error: " ^ msg); next xs)
+              | SOME (OK x, xs) => SOME (x, xs)
+              | NONE => NONE
+    in  streamOfUnfold next xs
+    end
 (* The basic error handler strips and prints errors. *)
 (* <boxed values 81>=                           *)
 val _ = op stripErrors : 'a error stream -> 'a stream
 (* <an interactive reader>=                     *)
 fun lexLineWith lexer =
-  stripErrors o streamOfUnfold lexer o streamOfList o explode
+    stripErrors o streamOfUnfold lexer o streamOfList o explode
 (* An error detected during lexical analysis is printed *)
 (* without any information about source-code locations. *)
 (* That's because, to keep things somewhat simple, *)
@@ -1297,10 +1299,10 @@ fun lexLineWith lexer =
 val _ = op lexLineWith : token lexer -> line -> token stream
 (* <an interactive reader>=                     *)
 fun parseWithErrors parser =
-  let fun adjust (SOME (ERROR msg, tokens)) = SOME (ERROR msg, drainLine tokens)
-        | adjust other = other
-  in  streamOfUnfold (adjust o parser)
-  end
+    let fun adjust (SOME (ERROR msg, tokens)) = SOME (ERROR msg, drainLine tokens)
+          | adjust other = other
+    in  streamOfUnfold (adjust o parser)
+    end
 (* When an error occurs during parsing, I drain the rest *)
 (* of the tokens on the line where the error occurred. *)
 (* I don't strip the errors at this point; errors need *)
@@ -1309,7 +1311,7 @@ fun parseWithErrors parser =
 (* adjusted.                                    *)
 (* <boxed values 83>=                           *)
 val _ = op parseWithErrors : 'a parser -> token located inline stream -> 'a
-                                                                    error stream
+                                                                             error stream
 (* <an interactive reader>=                     *)
 type prompts   = { ps1 : string, ps2 : string }
 val stdPrompts = { ps1 = "-> ", ps2 = "   " }
@@ -1332,36 +1334,36 @@ val _ = op stdPrompts : prompts
 val _ = op noPrompts  : prompts
 (* <an interactive reader>=                     *)
 fun 'a reader (lexer, parser) prompts (name, lines) =
-  let val { ps1, ps2 } = prompts
-      val thePrompt = ref ps1
-      fun setPrompt ps = fn _ => thePrompt := ps
+    let val { ps1, ps2 } = prompts
+        val thePrompt = ref ps1
+        fun setPrompt ps = fn _ => thePrompt := ps
 
-      val lines = preStream (fn () => print (!thePrompt), echoTagStream lines)
+        val lines = preStream (fn () => print (!thePrompt), echoTagStream lines)
 
-      fun lexAndDecorate (loc, line) =
-        let val tokens = postStream (lexLineWith lexer line, setPrompt ps2)
-        in  streamMap INLINE (streamZip (streamRepeat loc, tokens)) @@@
-            streamOfList [EOL (snd loc)]
-        end
+        fun lexAndDecorate (loc, line) =
+            let val tokens = postStream (lexLineWith lexer line, setPrompt ps2)
+            in  streamMap INLINE (streamZip (streamRepeat loc, tokens)) @@@
+                          streamOfList [EOL (snd loc)]
+            end
 
-      val edefs : 'a error stream = 
-        (parseWithErrors parser o streamConcatMap lexAndDecorate o locatedStream
-                                                                               )
-        (name, lines)
-(* The other job of the [[reader]] function is to *)
-(* deliver the right prompt in the right situation. *)
-(* START EDITING HERE.                          *)
-(*                                              *)
-(* The prompt is initially [[ps1]]. It is set to [[ps2]] *)
-(* every time a token is produced, then reset to [[ps1]] *)
-(* every time we attempt to parse a definition. [*] *)
-(* <boxed values 85>=                           *)
-val _ = op reader : token lexer * 'a parser -> prompts -> string * line stream
-                                                                    -> 'a stream
-val _ = op lexAndDecorate : srcloc * line -> token located inline stream
-  in  
-      stripErrors (preStream (setPrompt ps1, edefs))
-  end 
+        val edefs : 'a error stream = 
+            (parseWithErrors parser o streamConcatMap lexAndDecorate o locatedStream
+            )
+                (name, lines)
+        (* The other job of the [[reader]] function is to *)
+        (* deliver the right prompt in the right situation. *)
+        (* START EDITING HERE.                          *)
+        (*                                              *)
+        (* The prompt is initially [[ps1]]. It is set to [[ps2]] *)
+        (* every time a token is produced, then reset to [[ps1]] *)
+        (* every time we attempt to parse a definition. [*] *)
+        (* <boxed values 85>=                           *)
+        val _ = op reader : token lexer * 'a parser -> prompts -> string * line stream
+                            -> 'a stream
+        val _ = op lexAndDecorate : srcloc * line -> token located inline stream
+    in  
+        stripErrors (preStream (setPrompt ps1, edefs))
+    end 
 (* Supporting code for the ML interpreter for \uscheme *)
 (*                                              *)
 (* [*] [*]                                      *)
@@ -1382,43 +1384,43 @@ val _ = op lexAndDecorate : srcloc * line -> token located inline stream
 
 (* <lexical analysis ((mlscheme))>=             *)
 local
-  (* The [[atom]] function identifies the special literals *)
-  (* [[#t]] and [[#f]]; all other atoms are names. *)
-  (* <functions used in the lexer for \uscheme>=  *)
-  fun atom "#t" = SHARP true
-    | atom "#f" = SHARP false
-    | atom x    = NAME x
-  (* <functions used in the lexer for \uscheme>=  *)
-  fun noneIfLineEnds chars =
-    case streamGet chars
-      of NONE => NONE (* end of line *)
-       | SOME (#";", cs) => NONE (* comment *)
-       | SOME (c, cs) => 
-           let val msg = "invalid initial character in `" ^
-                         implode (c::listOfStream cs) ^ "'"
-           in  SOME (ERROR msg, EOS)
-           end
-  (* If the lexer doesn't recognize a bracket, quote mark, *)
-  (* integer, or other atom, we're expecting the line to *)
-  (* end. The end of the line may present itself as the *)
-  (* end of the input stream or as a stream of characters *)
-  (* beginning with a semicolon, which marks a comment. *)
-  (* If we encounter any other character, something has *)
-  (* gone wrong. (The polymorphic type of         *)
-  (* [[noneIfLineEnds]] provides a subtle but powerful *)
-  (* hint that no token can be produced; the only possible *)
-  (* outcomes are that nothing is produced, or the lexer *)
-  (* detects an error.) [*]                       *)
-  (* <boxed values 87>=                           *)
-  val _ = op noneIfLineEnds : 'a lexer
+    (* The [[atom]] function identifies the special literals *)
+    (* [[#t]] and [[#f]]; all other atoms are names. *)
+    (* <functions used in the lexer for \uscheme>=  *)
+    fun atom "#t" = SHARP true
+      | atom "#f" = SHARP false
+      | atom x    = NAME x
+    (* <functions used in the lexer for \uscheme>=  *)
+    fun noneIfLineEnds chars =
+        case streamGet chars
+         of NONE => NONE (* end of line *)
+          | SOME (#";", cs) => NONE (* comment *)
+          | SOME (c, cs) => 
+            let val msg = "invalid initial character in `" ^
+                          implode (c::listOfStream cs) ^ "'"
+            in  SOME (ERROR msg, EOS)
+            end
+    (* If the lexer doesn't recognize a bracket, quote mark, *)
+    (* integer, or other atom, we're expecting the line to *)
+    (* end. The end of the line may present itself as the *)
+    (* end of the input stream or as a stream of characters *)
+    (* beginning with a semicolon, which marks a comment. *)
+    (* If we encounter any other character, something has *)
+    (* gone wrong. (The polymorphic type of         *)
+    (* [[noneIfLineEnds]] provides a subtle but powerful *)
+    (* hint that no token can be produced; the only possible *)
+    (* outcomes are that nothing is produced, or the lexer *)
+    (* detects an error.) [*]                       *)
+    (* <boxed values 87>=                           *)
+    val _ = op noneIfLineEnds : 'a lexer
 in
-  val schemeToken =
+val schemeToken =
     whitespace *> (   BRACKET <$> oneEq #"("
-                  <|> BRACKET <$> oneEq #")"
-                  <|> QUOTE   <$  oneEq #"'"
-                  <|> INT     <$> intToken isDelim
-                  <|> (atom o implode) <$> many1 (sat (not o isDelim) one)
-                  <|> noneIfLineEnds
+                              <|> BRACKET <$> oneEq #")"
+                              <|> QUOTE   <$  oneEq #"'"
+                              <|> INT     <$> intToken isDelim
+                              <|> (atom o implode) <$> many1 (sat (not o isDelim) one)
+                              <|> noneIfLineEnds
                   )
 (* Before a micro-Scheme token, whitespace is ignored. *)
 (* The [[schemeToken]] function enumerates the  *)
@@ -1483,12 +1485,12 @@ datatype exp   = LITERAL of value
                | ASET  of exp * exp * exp
                | AMAKE of exp * exp
                | ALEN  of exp
-               (* This example illustrates a general principle: in a *)
-               (* monomorphic language, polymorphic primitives require *)
-               (* special abstract syntax. This principle also applies *)
-               (* to C and C++, for example, which denote array *)
-               (* operations with special syntax involving square *)
-               (* brackets.                                    *)
+(* This example illustrates a general principle: in a *)
+(* monomorphic language, polymorphic primitives require *)
+(* special abstract syntax. This principle also applies *)
+(* to C and C++, for example, which denote array *)
+(* operations with special syntax involving square *)
+(* brackets.                                    *)
 
 (* These changes are typical for this kind of design: in *)
 (* a monomorphic language, each polymorphic operation *)
@@ -1533,13 +1535,13 @@ datatype func = USERDEF   of string list * exp
 (* <printing values for \timpcore>=             *)
 fun valueString (NUM n) = Int.toString n
   | valueString (ARRAY a) =
-      if Array.length a = 0 then
-          "[]"
-      else
-          let val elts = Array.foldr (fn (v, s) => " " :: valueString v :: s) [
-                                                                          "]"] a
-          in  String.concat ("[" :: tl elts)
-          end
+    if Array.length a = 0 then
+        "[]"
+    else
+        let val elts = Array.foldr (fn (v, s) => " " :: valueString v :: s) [
+                    "]"] a
+        in  String.concat ("[" :: tl elts)
+        end
 (* Appendix [->] defines a function used to print types. *)
 (* <boxed values 1>=                            *)
 val _ = op typeString : ty -> string
@@ -1586,64 +1588,64 @@ val int     = (fn (INT   n) => SOME n  | _ => NONE) <$>? token
 val quote   = (fn (QUOTE)   => SOME () | _ => NONE) <$>? token
 
 fun exp tokens = (
-     VAR <$> name
- <|> (LITERAL o NUM) <$> int
- <|> booltok <!> "Typed Impcore has no Boolean literals"
- <|> quote   <!> "Typed Impcore has no quoted literals"
- <|> bracket "if"     "(if e1 e2 e3)"            (curry3 IFX    <$> exp <*> exp
-                                                                        <*> exp)
- <|> bracket "while"  "(while e1 e2)"            (curry  WHILEX <$> exp <*> exp)
- <|> bracket "set"    "(set x e)"                (curry  SET    <$> name <*> exp
-                                                                               )
- <|> bracket "begin"  ""                         (       BEGIN <$> many exp)
- <|> bracket "print"  "(print e)"                (       PRINT <$> exp)
- <|> bracket "="      "(= e1 e2)"                (curry  EQ    <$> exp <*> exp)
- <|> bracket "array-get"    "(array-get a i)"    (curry  AGET  <$> exp <*> exp)
+    VAR <$> name
+        <|> (LITERAL o NUM) <$> int
+        <|> booltok <!> "Typed Impcore has no Boolean literals"
+        <|> quote   <!> "Typed Impcore has no quoted literals"
+        <|> bracket "if"     "(if e1 e2 e3)"            (curry3 IFX    <$> exp <*> exp
+                                                                <*> exp)
+        <|> bracket "while"  "(while e1 e2)"            (curry  WHILEX <$> exp <*> exp)
+        <|> bracket "set"    "(set x e)"                (curry  SET    <$> name <*> exp
+                                                        )
+        <|> bracket "begin"  ""                         (       BEGIN <$> many exp)
+        <|> bracket "print"  "(print e)"                (       PRINT <$> exp)
+        <|> bracket "="      "(= e1 e2)"                (curry  EQ    <$> exp <*> exp)
+        <|> bracket "array-get"    "(array-get a i)"    (curry  AGET  <$> exp <*> exp)
 
- <|> bracket "array-set"    "(array-set a i e)"  (curry3 ASET  <$> exp <*> exp
-                                                                        <*> exp)
- <|> bracket "array-make"   "(array-make n e)"   (curry  AMAKE <$> exp <*> exp)
- <|> bracket "array-length" "(array-length a)"   (       ALEN  <$> exp)
+        <|> bracket "array-set"    "(array-set a i e)"  (curry3 ASET  <$> exp <*> exp
+                                                                <*> exp)
+        <|> bracket "array-make"   "(array-make n e)"   (curry  AMAKE <$> exp <*> exp)
+        <|> bracket "array-length" "(array-length a)"   (       ALEN  <$> exp)
 
- <|> "(" >-- literal ")" <!> "empty application"
- <|> curry APPLY <$> "(" >-- impcorefun <*> many exp --< ")"
+        <|> "(" >-- literal ")" <!> "empty application"
+        <|> curry APPLY <$> "(" >-- impcorefun <*> many exp --< ")"
 ) tokens
 and impcorefun tokens = 
-  (   name 
-  <|> exp <!> "only named functions can be applied"
-  <?> "function name"
-  ) tokens
+    (   name 
+            <|> exp <!> "only named functions can be applied"
+            <?> "function name"
+    ) tokens
 (* <parsing for \timpcore>=                     *)
 fun ty tokens = (
-     BOOLTY <$ literal "bool"
- <|> UNITTY <$ literal "unit"
- <|> INTTY  <$ literal "int"
- <|> (fn (loc, n) => errorAt ("Cannot recognize name " ^ n ^ " as a type") loc)
-     <$>! @@ name 
- <|> bracket "array" "(array ty)" (ARRAYTY <$> ty)
- <?> "int, bool, unit, or (array ty)"
- ) tokens
+    BOOLTY <$ literal "bool"
+           <|> UNITTY <$ literal "unit"
+           <|> INTTY  <$ literal "int"
+           <|> (fn (loc, n) => errorAt ("Cannot recognize name " ^ n ^ " as a type") loc)
+           <$>! @@ name 
+           <|> bracket "array" "(array ty)" (ARRAYTY <$> ty)
+           <?> "int, bool, unit, or (array ty)"
+) tokens
 
 val formal  = "(" >-- ((fn tau => fn x => (x, tau)) <$> ty <*> name --< ")"
-                      <?> "(ty argname)")
+                                                    <?> "(ty argname)")
 val formals = "(" >-- many formal --< ")" <?> "((ty1 x1) ... (tyN xN))"
 
 fun define ty f formals body =
-      defineDups f formals >>=+ (fn formals =>
-      DEFINE (f, { returns = ty, formals = formals, body = body }))
+    defineDups f formals >>=+ (fn formals =>
+                                  DEFINE (f, { returns = ty, formals = formals, body = body }))
 and defineDups f = nodupsty ("formal parameter", "definition of function " ^ f) 
 and nodupsty what (loc, xts) = 
-      nodups what (loc, map fst xts) >>=+ (fn _ => xts)
-                                          (* error on duplicate names *)
+    nodups what (loc, map fst xts) >>=+ (fn _ => xts)
+(* error on duplicate names *)
 val def = 
-     bracket "define" "(define ty f (args) body)" 
-                                     (define <$> ty <*> name <*> @@ formals <*>!
-                                                                            exp)
- <|> bracket "val"    "(val x e)"        (curry VAL <$> name <*> exp)
- <|> bracket "use"    "(use filename)"   (USE <$> name)
- <|> literal ")" <!> "unexpected right parenthesis"
- <|> EXP <$> exp
- <?> "definition"
+    bracket "define" "(define ty f (args) body)" 
+            (define <$> ty <*> name <*> @@ formals <*>!
+                    exp)
+            <|> bracket "val"    "(val x e)"        (curry VAL <$> name <*> exp)
+            <|> bracket "use"    "(use filename)"   (USE <$> name)
+            <|> literal ")" <!> "unexpected right parenthesis"
+            <|> EXP <$> exp
+            <?> "definition"
 (* <parsing for \timpcore>=                     *)
 val timpcoreSyntax = (schemeToken, def)
 
@@ -1661,13 +1663,13 @@ val timpcoreSyntax = (schemeToken, def)
 (* to be sure that responses are printed.       *)
 (* <implementation of [[use]]>=                 *)
 fun use readEvalPrint syntax filename rho =
-      let val fd = TextIO.openIn filename
-          val defs = reader syntax noPrompts (filename, streamOfLines fd)
-          fun writeln s = app print [s, "\n"]
-          fun errorln s = TextIO.output (TextIO.stdErr, s ^ "\n")
-      in  readEvalPrint (defs, writeln, errorln) rho
-          before TextIO.closeIn fd
-      end 
+    let val fd = TextIO.openIn filename
+        val defs = reader syntax noPrompts (filename, streamOfLines fd)
+        fun writeln s = app print [s, "\n"]
+        fun errorln s = TextIO.output (TextIO.stdErr, s ^ "\n")
+    in  readEvalPrint (defs, writeln, errorln) rho
+        before TextIO.closeIn fd
+    end 
 (* Functions [[reader]] and [[streamOfLines]] are *)
 (* defined in Appendix [->]. They are based on an *)
 (* abstraction called streams. A stream is like a list, *)
@@ -1690,171 +1692,177 @@ fun use readEvalPrint syntax filename rho =
 (* <type checking for \timpcore>=               *)
 exception TypeError of string
 fun typeof (e, globals, functions, formals) =
-  let (* All literals are integers. \usetyLiteral     *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-      fun ty (LITERAL v) = INTTY
-      (* To type a variable, we must try two environments. \ *)
-      (* usetyFormalVar \usetyGlobalVar The code is shorter *)
-      (* than the rules!                              *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (VAR x)     = (find (x, formals) handle NotFound _ => find (x,
-                                                                       globals))
-      (* If the variable is not found in either \rgam or \vgam *)
-      (* , the type checker raises the [[NotFound]] exception. *)
-      (*                                              *)
+    let (* All literals are integers. \usetyLiteral     *)
+        (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+         *)
+        fun ty (LITERAL v) = INTTY
+          (* To type a variable, we must try two environments. \ *)
+          (* usetyFormalVar \usetyGlobalVar The code is shorter *)
+          (* than the rules!                              *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (VAR x)     = (find (x, formals) handle NotFound _ => find (x,
+                                                                           globals))
+          (* If the variable is not found in either \rgam or \vgam *)
+          (* , the type checker raises the [[NotFound]] exception. *)
+          (*                                              *)
 
-      (* We also need two environments to check assignments. \ *)
-      (* usetyFormalAssign \usetyGlobalAssign To implement *)
-      (* these rules, we determine the types of the variable *)
-      (* and the expression, then compare for equality. (The *)
-      (* recursive call [[ty (VAR x)]] is a short cut that *)
-      (* avoids duplicating code.) Giving an error message *)
-      (* that is even remotely helpful requires as much code *)
-      (* as checking the types.                       *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (SET (x, e)) =
-               let val tau_x = ty (VAR x)
-                   val tau_e = ty e
-               in  if eqType (tau_x, tau_e) then
-                     tau_x
-                   else
-                     raise TypeError ("Set variable " ^ x ^ " of type " ^
-                                                              typeString tau_x ^
-                                      " to value of type " ^ typeString tau_e)
-               end
-      (* The premises of the \rulenameIf rule require both *)
-      (* branches to have the same type. \usetyIf The *)
-      (* implementation computes the types of the conditions *)
-      (* and both branches. Again, most of the code is devoted *)
-      (* to error messages.                           *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (IFX (e1, e2, e3)) =
+          (* We also need two environments to check assignments. \ *)
+          (* usetyFormalAssign \usetyGlobalAssign To implement *)
+          (* these rules, we determine the types of the variable *)
+          (* and the expression, then compare for equality. (The *)
+          (* recursive call [[ty (VAR x)]] is a short cut that *)
+          (* avoids duplicating code.) Giving an error message *)
+          (* that is even remotely helpful requires as much code *)
+          (* as checking the types.                       *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (SET (x, e)) =
+            let val tau_x = ty (VAR x)
+                val tau_e = ty e
+            in  if eqType (tau_x, tau_e) then
+                    tau_x
+                else
+                    raise TypeError ("Set variable " ^ x ^ " of type " ^
+                                     typeString tau_x ^
+                                     " to value of type " ^ typeString tau_e)
+            end
+          (* The premises of the \rulenameIf rule require both *)
+          (* branches to have the same type. \usetyIf The *)
+          (* implementation computes the types of the conditions *)
+          (* and both branches. Again, most of the code is devoted *)
+          (* to error messages.                           *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (IFX (e1, e2, e3)) =
             let val tau1 = ty e1
                 val tau2 = ty e2
                 val tau3 = ty e3
             in  if eqType (tau1, BOOLTY) then
-                  if eqType (tau2, tau3) then
-                    tau2
-                  else
-                    raise TypeError ("In if expression, true branch has type " ^
-                                     typeString tau2 ^
-                                                 " but false branch has type " ^
-                                     typeString tau3)
+                    if eqType (tau2, tau3) then
+                        tau2
+                    else
+                        raise TypeError ("In if expression, true branch has type " ^
+                                         typeString tau2 ^
+                                         " but false branch has type " ^
+                                         typeString tau3)
                 else
-                  raise TypeError ("Condition in if expression has type " ^
-                                                               typeString tau1 ^
-                                   ", which should be " ^ typeString BOOLTY)
+                    raise TypeError ("Condition in if expression has type " ^
+                                     typeString tau1 ^
+                                     ", which should be " ^ typeString BOOLTY)
             end
-      (* The checking of a [[while]] loop is very similar to *)
-      (* that of an [[if]], except that we don't care what the *)
-      (* type of the body is. \usetyWhile             *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (WHILEX (e1, e2)) =
+          (* The checking of a [[while]] loop is very similar to *)
+          (* that of an [[if]], except that we don't care what the *)
+          (* type of the body is. \usetyWhile             *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (WHILEX (e1, e2)) =
             let val tau1 = ty e1
                 val tau2 = ty e2
             in  if eqType (tau1, BOOLTY) then
-                  UNITTY
+                    UNITTY
                 else
-                  raise TypeError ("Condition in while expression has type " ^
-                                   typeString tau1 ^ ", which should be " ^
-                                   typeString BOOLTY)
+                    raise TypeError ("Condition in while expression has type " ^
+                                     typeString tau1 ^ ", which should be " ^
+                                     typeString BOOLTY)
             end
-      (* The code for [[begin]] checks the types of all *)
-      (* sub-expressions. \usetyBegin \usetyEmptyBegin We *)
-      (* handle the \rulenameEmptyBegin rule by using *)
-      (* [[UNITTY]] as the initial value of [[tau]] that is *)
-      (* passed to [[last]].                          *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (BEGIN es) =
-             let val bodytypes = map ty es
-                 fun last tau []     = tau
-                   | last tau (h::t) = last h t
-             in  last UNITTY bodytypes
-             end
-      (* Because the two polymorphic primitives have special *)
-      (* rules, they require special code in the type checker. *)
-      (* \usetyApplyEq Because functions in Typed Impcore are *)
-      (* called by name, we can identify the equality *)
-      (* primitive by name.                           *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (EQ (e1, e2)) =
-             let val (tau1, tau2) = (ty e1, ty e2)
-             in  if eqType (tau1, tau2) then
-                   BOOLTY
-                 else
-                   raise TypeError (
-                                "Equality compares values of different types " ^
-                                    typeString tau1 ^ " and " ^ typeString tau2)
-             end
-      (* The [[print]] primitive is similar. \usetyApplyPrint *)
-      (* We must check the type of the argument even though it *)
-      (* doesn't affect the type of the result.       *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (PRINT e) = (ty e; UNITTY)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
-                                                                              *)
-        | ty (APPLY (f, actuals)) =
-             let val actualtypes                     = map ty actuals
-                 val FUNTY (formaltypes, resulttype) = find (f, functions)
-                 (* <definition of [[parameterError]]>=          *)
-                 fun parameterError (n, atau::actuals, ftau::formals) =
-                       if eqType (atau, ftau) then
-                         parameterError (n+1, actuals, formals)
-                       else
-                         raise TypeError ("In call to " ^ f ^ ", parameter " ^
-                                          Int.toString n ^ " has type " ^
-                                                               typeString atau ^
-                                          " where type " ^ typeString ftau ^
-                                                                 " is expected")
-                   | parameterError _ =
-                       raise TypeError ("Function " ^ f ^ " expects " ^
-                                        Int.toString (length formaltypes) ^
-                                                                " parameters " ^
-                                        "but got " ^ Int.toString (length
-                                                                   actualtypes))
-                 (* For the general case of function application, we look *)
-                 (* up the function in the appropriate environment. *)
-                 (* To issue a decent error message, we compare the types *)
-                 (* of the actual and formal parameters one by one. \ *)
-                 (* usetyApply                                   *)
-                 (* <boxed values 3>=                            *)
-                 val _ = op parameterError : int * ty list * ty list -> 'a
-             in  if eqTypes (actualtypes, formaltypes) then
-                   resulttype
-                 else
-                   parameterError (1, actualtypes, formaltypes)
-             end
-      (* We don't show you how to turn these rules into code *)
-      (* for the type checker; that problem is left for *)
-      (* Exercise [->]. [*]                           *)
-      (* <function [[ty]], to check the type of an expression, given $\itenvs$ (
+          (* The code for [[begin]] checks the types of all *)
+          (* sub-expressions. \usetyBegin \usetyEmptyBegin We *)
+          (* handle the \rulenameEmptyBegin rule by using *)
+          (* [[UNITTY]] as the initial value of [[tau]] that is *)
+          (* passed to [[last]].                          *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (BEGIN es) =
+            let val bodytypes = map ty es
+                fun last tau []     = tau
+                  | last tau (h::t) = last h t
+            in  last UNITTY bodytypes
+            end
+          (* Because the two polymorphic primitives have special *)
+          (* rules, they require special code in the type checker. *)
+          (* \usetyApplyEq Because functions in Typed Impcore are *)
+          (* called by name, we can identify the equality *)
+          (* primitive by name.                           *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (EQ (e1, e2)) =
+            let val (tau1, tau2) = (ty e1, ty e2)
+            in  if eqType (tau1, tau2) then
+                    BOOLTY
+                else
+                    raise TypeError (
+                        "Equality compares values of different types " ^
+                        typeString tau1 ^ " and " ^ typeString tau2)
+            end
+          (* The [[print]] primitive is similar. \usetyApplyPrint *)
+          (* We must check the type of the argument even though it *)
+          (* doesn't affect the type of the result.       *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (PRINT e) = (ty e; UNITTY)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$>=
+           *)
+          | ty (APPLY (f, actuals)) =
+            let val actualtypes                     = map ty actuals
+                val FUNTY (formaltypes, resulttype) = find (f, functions)
+                (* <definition of [[parameterError]]>=          *)
+                fun parameterError (n, atau::actuals, ftau::formals) =
+                    if eqType (atau, ftau) then
+                        parameterError (n+1, actuals, formals)
+                    else
+                        raise TypeError ("In call to " ^ f ^ ", parameter " ^
+                                         Int.toString n ^ " has type " ^
+                                         typeString atau ^
+                                         " where type " ^ typeString ftau ^
+                                         " is expected")
+                  | parameterError _ =
+                    raise TypeError ("Function " ^ f ^ " expects " ^
+                                     Int.toString (length formaltypes) ^
+                                     " parameters " ^
+                                     "but got " ^ Int.toString (length
+                                                                    actualtypes))
+                (* For the general case of function application, we look *)
+                (* up the function in the appropriate environment. *)
+                (* To issue a decent error message, we compare the types *)
+                (* of the actual and formal parameters one by one. \ *)
+                (* usetyApply                                   *)
+                (* <boxed values 3>=                            *)
+                val _ = op parameterError : int * ty list * ty list -> 'a
+            in  if eqTypes (actualtypes, formaltypes) then
+                    resulttype
+                else
+                    parameterError (1, actualtypes, formaltypes)
+            end
+          (* We don't show you how to turn these rules into code *)
+          (* for the type checker; that problem is left for *)
+          (* Exercise [->]. [*]                           *)
+          (* <function [[ty]], to check the type of an expression, given $\itenvs$ (
                                                                (prototype))>= *)
-      | ty (AGET (a, i))       = raise LeftAsExercise "AGET"
-      | ty (ASET (a, i, e))    = raise LeftAsExercise "ASET"
-      | ty (AMAKE (len, init)) = raise LeftAsExercise "AMAKE"
-      | ty (ALEN a)            = raise LeftAsExercise "ALEN"
-(* Type checking                                *)
-(*                                              *)
-(* Given an expression e and a collection of type *)
-(* environments \xgam, \fgam, and \rgam, calling typeof *)
-(* (e, \xgam, \fgam, \rgam) returns a type tau such that *)
-(* \itypeise tau. If no such type exists, [[typeof]] *)
-(* raises the [[TypeError]] exception (or possibly *)
-(* [[NotFound]]). We use an auxiliary, nested function  *)
-(* [[ty]], which doesn't pass environments explicitly. *)
-(* <boxed values 2>=                            *)
-val _ = op typeof  : exp * ty env * funty env * ty env -> ty
-val _ = op ty      : exp -> ty
-  in  ty e
-  end
+          | ty (AGET (a, i))       = raise LeftAsExercise "AGET"
+          | ty (ASET (a, i, e))    = raise LeftAsExercise "ASET"
+          | ty (AMAKE (len, init)) =
+            let val (tau1, tau2) = (ty len, ty init)
+            in if eqType (tau1, INTTY) then
+                   ARRAYTY tau2
+               else
+                   raise TypeError ("Expected length of type int but got " ^ typeString tau1)
+            end
+          | ty (ALEN a)            = raise LeftAsExercise "ALEN"
+        (* Type checking                                *)
+        (*                                              *)
+        (* Given an expression e and a collection of type *)
+        (* environments \xgam, \fgam, and \rgam, calling typeof *)
+        (* (e, \xgam, \fgam, \rgam) returns a type tau such that *)
+        (* \itypeise tau. If no such type exists, [[typeof]] *)
+        (* raises the [[TypeError]] exception (or possibly *)
+        (* [[NotFound]]). We use an auxiliary, nested function  *)
+        (* [[ty]], which doesn't pass environments explicitly. *)
+        (* <boxed values 2>=                            *)
+        val _ = op typeof  : exp * ty env * funty env * ty env -> ty
+        val _ = op ty      : exp -> ty
+    in  ty e
+    end
 (* Just as we can derive an implementation of [[eval]] *)
 (* by examining the rules of operational semantics, we *)
 (* can derive an implementation of [[ty]] by examining *)
@@ -1867,35 +1875,35 @@ val _ = op ty      : exp -> ty
 exception RuntimeError of string
 fun elabdef (d, globals, functions) =
     case d
-      of (* Elaborating a [[val]] binding requires extending the *)
-         (* global-variable environment. \usetyVal       *)
-         (* <cases for elaborating definitions in \timpcore>= *)
-           VAL (x, e) => (bind (x, typeof (e, globals, functions, emptyEnv),
-                                                            globals), functions)
-         (* A top-level expression is syntactic sugar for a *)
-         (* definition of [[it]]. \usetyExp              *)
-         (* <cases for elaborating definitions in \timpcore>= *)
-         | EXP e => elabdef (VAL ("it", e), globals, functions)
-         (* A function definition requires significant   *)
-         (* manipulation of the function environment. \usety *)
-         (* Define                                       *)
-         (* <cases for elaborating definitions in \timpcore>= *)
-         | DEFINE (name, {returns, formals, body}) =>
-            let val (fnames, ftys) = ListPair.unzip formals
-                val functions' = bind (name, FUNTY (ftys, returns), functions)
-                val tau = typeof (body, globals, functions', bindList (fnames,
-                                                                ftys, emptyEnv))
-            in  if eqType (tau, returns) then
-                  (globals, functions')
-                else
-                  raise TypeError ("Body of function has type " ^ typeString tau
-                                                                               ^
-                                   ", which does not match declaration of " ^
-                                   typeString returns)
-            end
-         (* A [[use]] directive should never get this far. *)
-         (* <cases for elaborating definitions in \timpcore>= *)
-         | USE _ => raise BugInTypeChecking "`use' reached the type checker"
+     of (* Elaborating a [[val]] binding requires extending the *)
+        (* global-variable environment. \usetyVal       *)
+        (* <cases for elaborating definitions in \timpcore>= *)
+        VAL (x, e) => (bind (x, typeof (e, globals, functions, emptyEnv),
+                             globals), functions)
+      (* A top-level expression is syntactic sugar for a *)
+      (* definition of [[it]]. \usetyExp              *)
+      (* <cases for elaborating definitions in \timpcore>= *)
+      | EXP e => elabdef (VAL ("it", e), globals, functions)
+      (* A function definition requires significant   *)
+      (* manipulation of the function environment. \usety *)
+      (* Define                                       *)
+      (* <cases for elaborating definitions in \timpcore>= *)
+      | DEFINE (name, {returns, formals, body}) =>
+        let val (fnames, ftys) = ListPair.unzip formals
+            val functions' = bind (name, FUNTY (ftys, returns), functions)
+            val tau = typeof (body, globals, functions', bindList (fnames,
+                                                                   ftys, emptyEnv))
+        in  if eqType (tau, returns) then
+                (globals, functions')
+            else
+                raise TypeError ("Body of function has type " ^ typeString tau
+                                 ^
+                                 ", which does not match declaration of " ^
+                                 typeString returns)
+        end
+      (* A [[use]] directive should never get this far. *)
+      (* <cases for elaborating definitions in \timpcore>= *)
+      | USE _ => raise BugInTypeChecking "`use' reached the type checker"
 (* Type-checking definitions                    *)
 (*                                              *)
 (* The form of the typing judgment for a definition d is *)
@@ -1916,72 +1924,72 @@ val _ = op elabdef : def * ty env * funty env -> ty env * funty env
 (* <evaluation for \timpcore>=                  *)
 (* <definition of [[eval]] for \timpcore>=      *)
 fun eval (e, globals, functions, formals) =
-  let fun toBool (NUM 0) = false
-        | toBool _       = true
-      fun ofBool true    = NUM 1
-        | ofBool false   = NUM 0
-      val unitVal = NUM 1983 (* all values of unit type must test equal with =
-                                                                              *)
-      fun eq (NUM n1,   NUM n2)   = (n1 = n2)
-        | eq (ARRAY a1, ARRAY a2) = (a1 = a2)
-        | eq _                    = false
-      fun findVar v = find (v, formals) handle NotFound _ => find (v, globals)
-      fun ev (LITERAL n)          = n
-        | ev (VAR x)              = !(findVar x)
-        | ev (SET (x, e))         = let val v = ev e in v before findVar x := v
-                                                                             end
-        | ev (IFX (cond, t, f))   = if toBool (ev cond) then ev t else ev f
-        | ev (WHILEX (cond, exp)) =
+    let fun toBool (NUM 0) = false
+          | toBool _       = true
+        fun ofBool true    = NUM 1
+          | ofBool false   = NUM 0
+        val unitVal = NUM 1983 (* all values of unit type must test equal with =
+                                *)
+        fun eq (NUM n1,   NUM n2)   = (n1 = n2)
+          | eq (ARRAY a1, ARRAY a2) = (a1 = a2)
+          | eq _                    = false
+        fun findVar v = find (v, formals) handle NotFound _ => find (v, globals)
+        fun ev (LITERAL n)          = n
+          | ev (VAR x)              = !(findVar x)
+          | ev (SET (x, e))         = let val v = ev e in v before findVar x := v
+                                      end
+          | ev (IFX (cond, t, f))   = if toBool (ev cond) then ev t else ev f
+          | ev (WHILEX (cond, exp)) =
             if toBool (ev cond) then
                 (ev exp; ev (WHILEX (cond, exp)))
             else
                 unitVal
-        | ev (BEGIN es) =
+          | ev (BEGIN es) =
             let fun b (e::es, lastval) = b (es, ev e)
                   | b (   [], lastval) = lastval
             in  b (es, unitVal)
             end
-        | ev (EQ (e1, e2)) = ofBool (eq (ev e1, ev e2))
-        | ev (PRINT e)     = (print (valueString (ev e)^"\n"); unitVal)
-        | ev (APPLY (f, args)) =
+          | ev (EQ (e1, e2)) = ofBool (eq (ev e1, ev e2))
+          | ev (PRINT e)     = (print (valueString (ev e)^"\n"); unitVal)
+          | ev (APPLY (f, args)) =
             (case find (f, functions)
-               of PRIMITIVE p  => p (map ev args)
-                | USERDEF func => (* <apply user-defined function [[func]] to
+              of PRIMITIVE p  => p (map ev args)
+               | USERDEF func => (* <apply user-defined function [[func]] to
                                                                    [[args]]>= *)
-                                  let val (formals, body) = func
-                                      val actuals         = map (ref o ev) args
-                                  (* To apply a function, we build an evaluation
-                                                                              *)
-                                  (* environment. We strip the types off the
+                 let val (formals, body) = func
+                     val actuals         = map (ref o ev) args
+                     (* To apply a function, we build an evaluation
+                      *)
+                     (* environment. We strip the types off the
                                                                   formals and *)
-                                  (* we put the actuals in mutable ref cells.
-                                                                              *)
-                                  (* <boxed values 10>=
-                                                                              *)
-                                  val _ = op formals : name      list
-                                  val _ = op actuals : value ref list
-                                  in  eval (body, globals, functions, bindList (
-                                                    formals, actuals, emptyEnv))
-                                      handle BindListLength => 
-                                          raise BugInTypeChecking
-                                         "Wrong number of arguments to function"
-                                  end)
-        (* <more alternatives for [[ev]] for \timpcore>= *)
-        | ev (AGET (a, i)) =
+                     (* we put the actuals in mutable ref cells.
+                      *)
+                     (* <boxed values 10>=
+                      *)
+                     val _ = op formals : name      list
+                     val _ = op actuals : value ref list
+                 in  eval (body, globals, functions, bindList (
+                               formals, actuals, emptyEnv))
+                     handle BindListLength => 
+                            raise BugInTypeChecking
+                                  "Wrong number of arguments to function"
+                 end)
+          (* <more alternatives for [[ev]] for \timpcore>= *)
+          | ev (AGET (a, i)) =
             (Array.sub (toArray (ev a), toInt (ev i))
              handle Subscript => raise RuntimeError
-                                                "Array subscript out of bounds")
-        | ev (ASET (e1, e2, e3)) =
+                                       "Array subscript out of bounds")
+          | ev (ASET (e1, e2, e3)) =
             (let val (a, i, v) = (ev e1, ev e2, ev e3)
              in  Array.update (toArray a, toInt i, v);
                  v
              end handle Subscript => raise RuntimeError
-                                                "Array subscript out of bounds")
-        | ev (AMAKE (len, init)) = 
-             (ARRAY (Array.array (toInt (ev len), ev init))
-              handle Size => raise RuntimeError
-                                         "array length too large (or negative)")
-        | ev (ALEN a) = NUM (Array.length (toArray (ev a)))
+                                           "Array subscript out of bounds")
+          | ev (AMAKE (len, init)) = 
+            (ARRAY (Array.array (toInt (ev len), ev init))
+             handle Size => raise RuntimeError
+                                  "array length too large (or negative)")
+          | ev (ALEN a) = NUM (Array.length (toArray (ev a)))
         (* Once we have [[toArray]] and [[toInt]], interpreting *)
         (* the array operations is easy. Everything we need is *)
         (* in the [[Array]] module from ML's Standard Basis *)
@@ -1994,12 +2002,12 @@ fun eval (e, globals, functions, formals) =
         (* When we build the interpreter from this book, this *)
         (* code becomes part of the evaluator in Appendix [->]. *)
 
-(* Evaluation                                   *)
-(*                                              *)
-(* <boxed values 9>=                            *)
-val _ = op ev : exp -> value
-  in  ev e
-  end
+        (* Evaluation                                   *)
+        (*                                              *)
+        (* <boxed values 9>=                            *)
+        val _ = op ev : exp -> value
+    in  ev e
+    end
 (* The implementation of the evaluator uses the same *)
 (* techniques we use to implement micro-Scheme in *)
 (* Chapter [->]. Because of Typed Impcore's many *)
@@ -2013,25 +2021,25 @@ val _ = op ev : exp -> value
 val _ = op eval : exp * value ref env * func env * value ref env -> value
 (* <evaluation for \timpcore>=                  *)
 fun evaldef (d, globals, functions, echo) =
-  case d
-    of VAL (name, e) => (* <evaluate [[e]] and bind to [[name]]>=       *)
-                        let val v = eval (e, globals, functions, emptyEnv)
-                            val _ = echo (valueString v)
-                        in  (bind (name, ref v, globals), functions)
-                        end
-     | EXP e => evaldef (VAL ("it", e), globals, functions, echo)
-     | DEFINE (f, {body=e, formals=xs, returns=rt}) =>
-          (globals, bind (f, USERDEF (map #1 xs, e), functions))
-          before echo f
-     | USE _ => raise RuntimeError "Internal error - `use' was evaluated"
+    case d
+     of VAL (name, e) => (* <evaluate [[e]] and bind to [[name]]>=       *)
+        let val v = eval (e, globals, functions, emptyEnv)
+            val _ = echo (valueString v)
+        in  (bind (name, ref v, globals), functions)
+        end
+      | EXP e => evaldef (VAL ("it", e), globals, functions, echo)
+      | DEFINE (f, {body=e, formals=xs, returns=rt}) =>
+        (globals, bind (f, USERDEF (map #1 xs, e), functions))
+        before echo f
+      | USE _ => raise RuntimeError "Internal error - `use' was evaluated"
 (* <evaluation for \timpcore>=                  *)
 fun binaryOp f = (fn [a, b] => f (a, b) | _ => raise BugInTypeChecking "arity 2"
-                                                                               )
+                 )
 fun unaryOp  f = (fn [a]    => f a      | _ => raise BugInTypeChecking "arity 1"
-                                                                               )
+                 )
 (* <boxed values 12>=                           *)
 val _ = op evaldef : def * value ref env * func env * (string->unit) -> value
-                                                              ref env * func env
+                                                                            ref env * func env
 (* Here are the primitives. As in Chapter [->], all are *)
 (* either binary or unary operators. Type checking *)
 (* should guarantee that operators are used with the *)
@@ -2041,8 +2049,8 @@ val _ = op unaryOp  : (value         -> value) -> (value list -> value)
 val _ = op binaryOp : (value * value -> value) -> (value list -> value)
 (* <evaluation for \timpcore>=                  *)
 fun arithOp f =
-      binaryOp (fn (NUM n1, NUM n2) => NUM (f (n1, n2)) 
-                 | _ => raise BugInTypeChecking "arithmetic on non-numbers")
+    binaryOp (fn (NUM n1, NUM n2) => NUM (f (n1, n2)) 
+             | _ => raise BugInTypeChecking "arithmetic on non-numbers")
 val arithtype = FUNTY ([INTTY, INTTY], INTTY)
 (* Arithmetic primitives expect and return integers. *)
 (* <boxed values 13>=                           *)
@@ -2060,8 +2068,8 @@ val _ = op arithtype : funty
 fun embedPredicate f args = NUM (if f args then 1 else 0)
 fun comparison f = binaryOp (embedPredicate f)
 fun intcompare f = 
-      comparison (fn (NUM n1, NUM n2) => f (n1, n2)
-                   | _ => raise BugInTypeChecking "comparing non-numbers")
+    comparison (fn (NUM n1, NUM n2) => f (n1, n2)
+               | _ => raise BugInTypeChecking "comparing non-numbers")
 val comptype = FUNTY ([INTTY, INTTY], BOOLTY)
 (* Comparisons take two arguments. Most comparisons *)
 (* (except for equality) apply only to integers. *)
@@ -2071,32 +2079,32 @@ val _ = op intcompare : (int   * int   -> bool) -> (value list -> value)
 val _ = op comptype   : funty
 type env_bundle = ty env * funty env * value ref env * func env
 fun checkThenEval (d, envs as (tglobals, tfuns, vglobals, vfuns), echo) =
-  case d
-    of USE filename => use readCheckEvalPrint timpcoreSyntax filename envs
-     | _ =>
+    case d
+     of USE filename => use readCheckEvalPrint timpcoreSyntax filename envs
+      | _ =>
         let val (tglobals, tfuns) = elabdef (d, tglobals, tfuns)
             val (vglobals, vfuns) = evaldef (d, vglobals, vfuns, echo)
-(* Top-level processing: type checking and evaluation *)
-(*                                              *)
-(* In an interpreter for a dynamically typed language *)
-(* such as Impcore or micro-Scheme, we can evaluate a *)
-(* top-level item as soon as it is parsed. In an *)
-(* interpreter for a statically typed language such as *)
-(* Typed Impcore, we require a type-checking step *)
-(* between parsing and evaluation. A simple way to *)
-(* introduce this step is to define a function  *)
-(* [[checkThenEval]] which first elaborates a definition *)
-(* (type-checking all its subexpressions), then *)
-(* evaluates it. This function manipulates not only the *)
-(* top-level type environments \fgam and \vgam but also *)
-(* the top-level value and function environments phi *)
-(*  and xi. We define type [[env_bundle]] to refer to *)
-(* this group of four environments. The value   *)
-(* environment xi is the only one that can be mutated *)
-(* during evaluation, so it is the only one that has a *)
-(* [[ref]] in its type.                         *)
-(* <boxed values 5>=                            *)
-val _ = op checkThenEval : def * env_bundle * (string->unit) -> env_bundle
+            (* Top-level processing: type checking and evaluation *)
+            (*                                              *)
+            (* In an interpreter for a dynamically typed language *)
+            (* such as Impcore or micro-Scheme, we can evaluate a *)
+            (* top-level item as soon as it is parsed. In an *)
+            (* interpreter for a statically typed language such as *)
+            (* Typed Impcore, we require a type-checking step *)
+            (* between parsing and evaluation. A simple way to *)
+            (* introduce this step is to define a function  *)
+            (* [[checkThenEval]] which first elaborates a definition *)
+            (* (type-checking all its subexpressions), then *)
+            (* evaluates it. This function manipulates not only the *)
+            (* top-level type environments \fgam and \vgam but also *)
+            (* the top-level value and function environments phi *)
+            (*  and xi. We define type [[env_bundle]] to refer to *)
+            (* this group of four environments. The value   *)
+            (* environment xi is the only one that can be mutated *)
+            (* during evaluation, so it is the only one that has a *)
+            (* [[ref]] in its type.                         *)
+            (* <boxed values 5>=                            *)
+            val _ = op checkThenEval : def * env_bundle * (string->unit) -> env_bundle
         in  (tglobals, tfuns, vglobals, vfuns)
         end
 (* The distinction between ``compile time,'' where we *)
@@ -2109,32 +2117,32 @@ val _ = op checkThenEval : def * env_bundle * (string->unit) -> env_bundle
 
 (* <checking and evaluation for \timpcore>=     *)
 and readCheckEvalPrint (defs, echo, errmsg) envs =
-  let fun processDef (def, envs) =
+    let fun processDef (def, envs) =
             let fun continue msg = (errmsg msg; envs)
             in  checkThenEval (def, envs, echo)
                 handle IO.Io {name, ...} => continue ("I/O error: " ^ name)
-                (* <more read-eval-print handlers>=             *)
-                | TypeError         msg => continue ("type error: " ^ msg)
-                | BugInTypeChecking msg => continue ("bug in type checking: " ^
-                                                                            msg)
-                (* The next handlers deal with problems that arise *)
-                (* during I/O, lexical analysis, and parsing.   *)
-                (* <more read-eval-print handlers>=             *)
-                (* The exception [[IO.Io]] is part of the Standard Basis *)
-                (* Library.                                     *)
+                     (* <more read-eval-print handlers>=             *)
+                     | TypeError         msg => continue ("type error: " ^ msg)
+                     | BugInTypeChecking msg => continue ("bug in type checking: " ^
+                                                          msg)
+                     (* The next handlers deal with problems that arise *)
+                     (* during I/O, lexical analysis, and parsing.   *)
+                     (* <more read-eval-print handlers>=             *)
+                     (* The exception [[IO.Io]] is part of the Standard Basis *)
+                     (* Library.                                     *)
 
-                (* The remaining handlers deal with problems that arise *)
-                (* during evaluation.                           *)
-                (* <more read-eval-print handlers>=             *)
-                | Div               => continue "Division by zero"
-                | Overflow          => continue "Arithmetic overflow"
-                | RuntimeError msg  => continue ("run-time error: " ^ msg)
-                | NotFound n        => continue ("variable " ^ n ^ " not found")
-                (* Exceptions [[Div]] and [[Overflow]] are predefined. *)
+                     (* The remaining handlers deal with problems that arise *)
+                     (* during evaluation.                           *)
+                     (* <more read-eval-print handlers>=             *)
+                     | Div               => continue "Division by zero"
+                     | Overflow          => continue "Arithmetic overflow"
+                     | RuntimeError msg  => continue ("run-time error: " ^ msg)
+                     | NotFound n        => continue ("variable " ^ n ^ " not found")
+                                                     (* Exceptions [[Div]] and [[Overflow]] are predefined. *)
 
             end
-  in  streamFold processDef envs defs
-  end
+    in  streamFold processDef envs defs
+    end
 (* The read-eval-print loop                     *)
 (*                                              *)
 (* As in micro-Scheme, the read-eval-print loop is *)
@@ -2144,7 +2152,7 @@ and readCheckEvalPrint (defs, echo, errmsg) envs =
 (* [[TypeError]] and [[BugInTypeChecking]].     *)
 (* <boxed values 6>=                            *)
 val _ = op readCheckEvalPrint : def stream * (string->unit) * (string->unit) ->
-                                                        env_bundle -> env_bundle
+                                env_bundle -> env_bundle
 (* The [[]] are the                             *)
 (* same handlers used in micro-Scheme. We also have *)
 (* handlers for two new exceptions. [[TypeError]] is *)
@@ -2166,42 +2174,42 @@ val _ = op readCheckEvalPrint : def stream * (string->unit) * (string->unit) ->
 (* interpreter.                                 *)
 (* <initialization for \timpcore>=              *)
 val initialEnvs =
-  let fun addPrim ((name, prim, funty), (tfuns, vfuns)) = 
-        ( bind (name, funty, tfuns)
-        , bind (name, PRIMITIVE prim, vfuns)
-        )
-      val (tfuns, vfuns)  = foldl addPrim (emptyEnv, emptyEnv)
-                            ((* <primops for \timpcore\ [[::]]>=             *)
-                             ("+", arithOp op +,   arithtype) :: 
-                             ("-", arithOp op -,   arithtype) :: 
-                             ("*", arithOp op *,   arithtype) :: 
-                             ("/", arithOp op div, arithtype) ::
-                             (* <primops for \timpcore\ [[::]]>=             *)
-                             ("<", intcompare op <, comptype) :: 
-                             (">", intcompare op >, comptype) :: nil)
-      val envs  = (emptyEnv, tfuns, emptyEnv, vfuns)
-      val basis = (* Further reading                              *)
-                  (*                                              *)
-                  (* \citetkoenig:anecdote describes an experience with *)
-                  (* ML type inference which leads to a conclusion that *)
-                  (* resembles my conclusion about the type of    *)
-                  (* [[noneIfLineEnds]] on page [->].             *)
-                  (*                                              *)
-                  (* <ML representation of initial basis>=        *)
+    let fun addPrim ((name, prim, funty), (tfuns, vfuns)) = 
+            ( bind (name, funty, tfuns)
+            , bind (name, PRIMITIVE prim, vfuns)
+            )
+        val (tfuns, vfuns)  = foldl addPrim (emptyEnv, emptyEnv)
+                                    ((* <primops for \timpcore\ [[::]]>=             *)
+                                      ("+", arithOp op +,   arithtype) :: 
+                                      ("-", arithOp op -,   arithtype) :: 
+                                      ("*", arithOp op *,   arithtype) :: 
+                                      ("/", arithOp op div, arithtype) ::
+                                      (* <primops for \timpcore\ [[::]]>=             *)
+                                      ("<", intcompare op <, comptype) :: 
+                                      (">", intcompare op >, comptype) :: nil)
+        val envs  = (emptyEnv, tfuns, emptyEnv, vfuns)
+        val basis = (* Further reading                              *)
+            (*                                              *)
+            (* \citetkoenig:anecdote describes an experience with *)
+            (* ML type inference which leads to a conclusion that *)
+            (* resembles my conclusion about the type of    *)
+            (* [[noneIfLineEnds]] on page [->].             *)
+            (*                                              *)
+            (* <ML representation of initial basis>=        *)
 
-                   [ "(define bool and ((bool b) (bool c)) (if b c b))"
-                   , "(define bool or  ((bool b) (bool c)) (if b b c))"
-                   ,
-                  "(define bool not ((bool b))          (if b (= 1 0) (= 0 0)))"
-                   , "(define bool <= ((int x) (int y)) (not (> x y)))"
-                   , "(define bool >= ((int x) (int y)) (not (< x y)))"
-                   , "(define bool != ((int x) (int y)) (not (= x y)))"
-                   , "(define int mod ((int m) (int n)) (- m (* n (/ m n))))"
-                    ]
-      val defs  = reader timpcoreSyntax noPrompts ("initial basis", streamOfList
+            [ "(define bool and ((bool b) (bool c)) (if b c b))"
+            , "(define bool or  ((bool b) (bool c)) (if b b c))"
+            ,
+              "(define bool not ((bool b))          (if b (= 1 0) (= 0 0)))"
+            , "(define bool <= ((int x) (int y)) (not (> x y)))"
+            , "(define bool >= ((int x) (int y)) (not (< x y)))"
+            , "(define bool != ((int x) (int y)) (not (= x y)))"
+            , "(define int mod ((int m) (int n)) (- m (* n (/ m n))))"
+            ]
+        val defs  = reader timpcoreSyntax noPrompts ("initial basis", streamOfList
                                                                           basis)
-  in  readCheckEvalPrint (defs, fn _ => (), fn _ => ()) envs
-  end
+    in  readCheckEvalPrint (defs, fn _ => (), fn _ => ()) envs
+    end
 (* The code for the primitives appears in Appendix [->]. *)
 (* It is similar to the code in Chapter [->], except *)
 (* that it supplies a type, not just a value, for each *)
@@ -2212,14 +2220,14 @@ val initialEnvs =
 (* which tells it whether to prompt.            *)
 (* <initialization for \timpcore>=              *)
 fun runInterpreter noisy = 
-  let fun writeln s = app print [s, "\n"]
-      fun errorln s = TextIO.output (TextIO.stdErr, s ^ "\n")
-      val prompts = if noisy then stdPrompts else noPrompts
-      val defs =
-        reader timpcoreSyntax prompts ("standard input", streamOfLines
-                                                                   TextIO.stdIn)
-  in  ignore (readCheckEvalPrint (defs, writeln, errorln) initialEnvs)
-  end 
+    let fun writeln s = app print [s, "\n"]
+        fun errorln s = TextIO.output (TextIO.stdErr, s ^ "\n")
+        val prompts = if noisy then stdPrompts else noPrompts
+        val defs =
+            reader timpcoreSyntax prompts ("standard input", streamOfLines
+                                                                 TextIO.stdIn)
+    in  ignore (readCheckEvalPrint (defs, writeln, errorln) initialEnvs)
+    end 
 
 
 (*****************************************************************)
@@ -2243,5 +2251,5 @@ fun runInterpreter noisy =
 fun main ["-q"] = runInterpreter false
   | main []     = runInterpreter true
   | main _      =
-      TextIO.output (TextIO.stdErr, "Usage: " ^ CommandLine.name () ^ " [-q]\n")
+    TextIO.output (TextIO.stdErr, "Usage: " ^ CommandLine.name () ^ " [-q]\n")
 val _ = main (CommandLine.arguments ())

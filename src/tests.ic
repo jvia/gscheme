@@ -1,0 +1,43 @@
+(define bool assertInt=  ((int actual) (int expected)) (= actual expected))
+(define bool assertBool= ((bool actual) (bool expected)) (= actual expected))
+;; (define (array int) assertIntArray= (((array int) actual) ((array int) expected)))
+
+;; (define int add1 ((int x)) (+ x 1))
+;; (add1 (+ 3 5))
+;; (add1 (< 3 5))
+;; (val a 1)
+;; (val b 2)
+
+(define int TEST-BOOLEAN-PRIMITIVES () 0)
+(val true  (= 1 1))
+(val false (= 1 0))
+
+(define int TEST-AND () 0)
+(assertBool= (and true true)   true)
+(assertBool= (and true false)  false)
+(assertBool= (and false false) false)
+(assertBool= (and false true)  false)
+
+(define int TEST-OR () 0)
+(assertBool= (or true true)   true)
+(assertBool= (or true false)  true)
+(assertBool= (or false false) false)
+(assertBool= (or false true)  true)
+
+
+(define int TEST-ARRAY-MAKE () 0)
+
+(val arrInt (array-make 10 0))
+(array-length arrInt)
+(array-get arrInt 0)
+(array-set arrInt 0 4)
+(print arrInt)
+
+(val arrBool (array-make 5 true))
+(array-length arrBool)
+(array-get arrBool 0)
+(array-set arrBool 0 false)
+(print arrBool)
+
+;; Break array-length
+(array-length true)

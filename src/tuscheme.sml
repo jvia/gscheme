@@ -1855,15 +1855,16 @@ fun appearsUnprotectedIn (x, e) =
 fun getTycon (NUM _)       = inttype
   | getTycon (BOOL _)      = booltype
   | getTycon (SYM  _)      = symtype
-  | getTycon NIL           = unittype
+  | getTycon NIL           = tyvarA
   | getTycon (PAIR (l,r))  =
     let fun listLiteral (PAIR (lit, NIL)) =  getTycon lit
           | listLiteral (PAIR (lit, list)) = 
             let val (tau1, tau2) = (getTycon lit, listLiteral list)
-            in if eqType (tau1, tau2) then
+            in 
+                if eqType (tau1, tau2) then
                    tau1
-               else
-                   raise TypeError "List must be homogenous"
+                else
+                    raise TypeError "List must be homogenous"
             end
           | listLiteral _ = raise TypeError "Meep"
     in

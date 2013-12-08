@@ -6,8 +6,8 @@ tex: list.tex
 test-timpcore: timpcore
 	cat src/tests.ic | ./src/timpcore -q
 
-# test-timpcore: timpcore
-# 	cat src/tests.ic | ./src/tuscheme
+test-tuscheme: tuscheme
+	cat src/tests.scm | ./src/tuscheme -q
 
 timpcore: src/timpcore.sml
 	mlton src/timpcore.sml

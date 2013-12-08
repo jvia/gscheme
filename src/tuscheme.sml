@@ -1857,17 +1857,17 @@ fun getTycon (NUM _)       = inttype
   | getTycon (SYM  _)      = symtype
   | getTycon NIL           = unittype
   | getTycon (PAIR (l,r))  =
-    let fun listLiteral (PAIR (lit, NIL)) = listtype (getTycon lit)
-          | listLiteral (PAIR (lit, list)) =
-            let val (tau1, (CONAPP (_, [tau2]))) = (getTycon lit, listLiteral list)
+    let fun listLiteral (PAIR (lit, NIL)) =  getTycon lit
+          | listLiteral (PAIR (lit, list)) = 
+            let val (tau1, tau2) = (getTycon lit, listLiteral list)
             in if eqType (tau1, tau2) then
-                   listtype tau1
+                   tau1
                else
                    raise TypeError "List must be homogenous"
             end
           | listLiteral _ = raise TypeError "Meep"
     in
-        listLiteral (PAIR (l,r))
+        listtype (listLiteral (PAIR (l,r)))
     end
   | getTycon (CLOSURE _)   = raise TypeError "Clojure: I wish"
   | getTycon (PRIMITIVE _) = raise TypeError "Primitive type"

@@ -11,6 +11,7 @@
 (if #t (begin 1) (begin #f))
 (while #f 2)
 (val a 2)
+(set a 5)
 a
 
 

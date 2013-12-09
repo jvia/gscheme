@@ -1877,7 +1877,15 @@ fun getTycon (NUM _)       = inttype
 fun typeof (exp, gamma, delta) =
     let fun ty (LITERAL value) = getTycon value
           | ty (VAR name) = find (name, gamma)
-          | ty (SET (name, exp)) = raise LeftAsExercise "SET"
+          | ty (SET (name, exp)) = 
+            let val tau1 = ty exp
+                val tau2 = find (name, gamma)         
+            in
+                if eqType (tau1, tau2) then
+                   tau1
+               else
+                   raise TypeError ("Expected expression of " ^ typeString tau1 ^ " but got " ^ typeString tau2)
+            end
           | ty (IFX (e1, e2, e3)) =
             let val tau1 = ty e1
                 val tau2 = ty e2

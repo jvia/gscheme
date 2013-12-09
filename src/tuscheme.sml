@@ -1882,20 +1882,29 @@ fun typeof (exp, gamma, delta) =
             let val tau1 = ty e1
                 val tau2 = ty e2
                 val tau3 = ty e3
-            in if eqType (tau1, booltype) then
-                   if eqType (tau2, tau3) then
-                       tau2
-                   else
-                       raise TypeError ("In if expression, true branch has type " ^
-                                        typeString tau2 ^
-                                        " but false branch has type " ^
-                                        typeString tau3)
-               else
-                   raise TypeError ("Condition in if expression has type " ^
-                                    typeString tau1 ^
-                                    ", which should be " ^ typeString booltype)
+            in 
+                if eqType (tau1, booltype) then
+                    if eqType (tau2, tau3) then
+                        tau2
+                    else
+                        raise TypeError ("In if expression, true branch has type " ^
+                                         typeString tau2 ^
+                                         " but false branch has type " ^
+                                         typeString tau3)
+                else
+                    raise TypeError ("Condition in if expression has type " ^
+                                     typeString tau1 ^
+                                     ", which should be " ^ typeString booltype)
             end
-          | ty (WHILEX (e1, e2)) = raise LeftAsExercise "WHILE"
+          | ty (WHILEX (e1, e2)) = 
+            let val tau1 = ty e1
+                val tau2 = ty e2
+            in 
+                if (eqType (tau1, booltype)) then
+                    unittype
+                else
+                    raise TypeError ("Expected expression 1 to be of bool type, got " ^ typeString tau1)
+            end
           | ty (BEGIN (exps)) = raise LeftAsExercise "BEGIN"
           | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
           | ty (LETX (letkind, bindings, exp)) = raise LeftAsExercise "LETX"

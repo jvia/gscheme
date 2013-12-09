@@ -1905,7 +1905,12 @@ fun typeof (exp, gamma, delta) =
                 else
                     raise TypeError ("Expected expression 1 to be of bool type, got " ^ typeString tau1)
             end
-          | ty (BEGIN (exps)) = raise LeftAsExercise "BEGIN"
+          | ty (BEGIN (exps)) =
+            let val bodytypes = map ty exps
+                fun last tau [] = tau
+                  | last tau (h::t) = last h t
+            in last unittype bodytypes
+            end
           | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
           | ty (LETX (letkind, bindings, exp)) = raise LeftAsExercise "LETX"
           | ty (LAMBDA (lambdaexp)) = raise LeftAsExercise "LAMNDA"
@@ -2505,7 +2510,7 @@ val initialEnvs =
                      (* the same way that types classify expressions. *)
  nil)
       val envs    = (kinds, types, values)
-      val disable_basis = false
+      val disable_basis = true
       val basis   = if disable_basis then [] else
                     (* Further reading                              *)
                     (*                                              *)

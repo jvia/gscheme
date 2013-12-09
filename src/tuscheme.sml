@@ -1876,7 +1876,7 @@ fun getTycon (NUM _)       = inttype
 
 fun typeof (exp, gamma, delta) =
     let fun ty (LITERAL value) = getTycon value
-          | ty (VAR name) = raise LeftAsExercise "VAR"
+          | ty (VAR name) = find (name, gamma)
           | ty (SET (name, exp)) = raise LeftAsExercise "SET"
           | ty (IFX (e1, e2, e3)) =
             let val tau1 = ty e1
@@ -1911,11 +1911,17 @@ fun typeof (exp, gamma, delta) =
                   | last tau (h::t) = last h t
             in last unittype bodytypes
             end
-          | ty (APPLY (f, actuals)) = raise LeftAsExercise "APPLY"
+          | ty (APPLY (f, actuals)) =
+            let val actualtypes = map ty actuals
+                val fty = ty f
+            in
+                raise TypeError "shoot me"
+            end                            
           | ty (LETX (letkind, bindings, exp)) = raise LeftAsExercise "LETX"
           | ty (LAMBDA (lambdaexp)) = raise LeftAsExercise "LAMNDA"
           | ty (TYLAMBDA (names,exp)) = raise LeftAsExercise "TYLAMBDA"
-          | ty (TYAPPLY (exp,tylist)) = raise LeftAsExercise "TYAPPLY"
+          | ty (TYAPPLY (exp, tylist)) =
+            raise LeftAsExercise "TYAPPLY: "
     in
         (* val _ = op ty : exp -> tyexp *)
         ty exp
@@ -2604,13 +2610,13 @@ val initialEnvs =
                      , "(define bool <= ((int x) (int y)) (not (> x y)))"
                      , "(define bool >= ((int x) (int y)) (not (< x y)))"
                      ,
-     "(val != (type-lambda ('a) (lambda (('a x) ('a y)) (not ((@ = 'a) x y)))))"
+                       "(val != (type-lambda ('a) (lambda (('a x) ('a y)) (not ((@ = 'a) x y)))))"
                      , "(define int max ((int x) (int y)) (if (> x y) x y))"
                      , "(define int min ((int x) (int y)) (if (< x y) x y))"
                      , ""
                      , "(define int mod ((int m) (int n)) (- m (* n (/ m n))))"
                      ,
-   "(define int gcd ((int m) (int n)) (if ((@ = int) n 0) m (gcd n (mod m n))))"
+                       "(define int gcd ((int m) (int n)) (if ((@ = int) n 0) m (gcd n (mod m n))))"
                      ,
                       "(define int lcm ((int m) (int n)) (* m (/ n (gcd m n))))"
                       ]

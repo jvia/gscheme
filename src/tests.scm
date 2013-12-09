@@ -10,3 +10,9 @@
 (if #t (begin 1) (begin 2))
 (if #t (begin 1) (begin #f))
 (while #f 2)
+(val a 2)
+a
+
+
+(+ 2 2)
+((@ + int) 1 2)

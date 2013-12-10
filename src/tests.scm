@@ -20,7 +20,7 @@ a
 
 ;; Let start
 (let* ((x 2)
-      (y (+ x 2)))
+       (y (+ x 2)))
   (+ x y))
 
 (lambda ((int x))
@@ -28,6 +28,15 @@ a
 
 (+ 2 2)
 (- 3 1)
+(= 2 3)
 ((@ = int)  1 1)
 ((@ = bool) #t #t)
 ((@ + int)  1 2)
+
+(val-rec int a 1979)
+(val-rec (list int) b '(1 2 3 4))
+
+(val list1 (type-lambda ('a) (lambda (('a x)) ((@ cons 'a) x (@ '() 'a)))))
+((@ list1 int) 1)
+(val length-int (@ length int))
+(val cons-bool (@ cons bool))

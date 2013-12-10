@@ -1934,8 +1934,7 @@ fun typeof (exp, gamma, delta) =
                    if eqTypes (actualtypes, args) then
                        result
                    else raise TypeError("Arguments do not match types")
-                 | (FORALL _ ) => raise TypeError ("Must instantiate a polymorphic function beore using it: "
-                                                   ^ typeString tau)
+                 | (FORALL _ ) => raise TypeError ("Must instantiate a polymorphic function beore using it: " ^ typeString tau)
                  | _  => raise TypeError ("Invalid function type: " ^ typeString tau)
             end                            
           | ty (LETX (LET, bindings, exp)) = 
@@ -1973,10 +1972,15 @@ fun elabdef (def, gamma, delta) =
         let val tau = typeof (exp, gamma, delta)
         in (bind (name, tau, gamma), typeString tau)
         end
-      | VALREC (name, tyex, exp)        => raise LeftAsExercise "VALREC"
+      | VALREC (name, tau, exp)        =>
+        let val gamma' = bind (name, tau, gamma)
+            val _ = typeof (exp, gamma', delta)
+        in
+            (gamma', typeString tau)
+        end
       | EXP (exp)                       => elabdef (VAL ("it", exp), gamma, delta)
       | DEFINE (name, tyex, lambda_exp) => raise LeftAsExercise "DEFINE"
-      | USE (name)                      => raise LeftAsExercise "USE"
+      | USE (name)                      => (gamma, typeString unittype)
 
 (* Type checking                                *)
 (*                                              *)
@@ -2554,8 +2558,7 @@ val initialEnvs =
                               (* the same way that types classify expressions. *)
                               nil)
         val envs    = (kinds, types, values)
-        val disable_basis = true
-        val basis   = if disable_basis then [] else
+        val basis   = 
                       (* Further reading                              *)
                       (*                                              *)
                       (* \citetkoenig:anecdote describes an experience with *)

@@ -1883,7 +1883,15 @@ fun typeof (exp, gamma, delta) =
           | ty (LITERAL (CLOSURE _))   = raise LeftAsExercise "CLOSURE"
           | ty (LITERAL (PRIMITIVE _)) = raise LeftAsExercise "PRIMITIVE"
           | ty (VAR name)              = find (name, gamma)
-          | ty (SET (name, exp)) = raise LeftAsExercise "SET"
+          | ty (SET (name, exp)) = 
+            let val tau1 = ty exp
+                val tau2 = find(name,gamma) 
+            in
+                if eqType (tau1,tau2) then
+                    tau1
+                else
+                    raise TypeError ("Expecting expression of type " ^ typeString tau2 ^ " but got " ^ typeString tau1)
+            end
           | ty (IFX (e1, e2, e3)) =
             let val tau1 = ty e1
                 val tau2 = ty e2
@@ -1929,7 +1937,13 @@ fun typeof (exp, gamma, delta) =
                                                    ^ typeString tau)
                  | _  => raise TypeError ("Invalid function type: " ^ typeString tau)
             end                            
-          | ty (LETX (letkind, bindings, exp)) = raise LeftAsExercise "LETX"
+          | ty (LETX (LET, bindings, exp)) = 
+            let val taus = map ty (map snd bindings)
+                val vars = map fst bindings
+            in
+                typeof (exp, bindList(vars,taus,gamma), delta)
+            end
+          | ty (LETX (LETSTAR, bindings, exp)) = raise LeftAsExercise "LETSTAR"
           | ty (LAMBDA (lambdaexp))            = raise LeftAsExercise "LAMBDA"
           | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise "TYLAMBDA"
           | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise "TYAPPLY: "

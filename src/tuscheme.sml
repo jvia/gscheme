@@ -1949,8 +1949,8 @@ fun typeof (exp, gamma, delta) =
                 typeof (LETX (LETSTAR, bindings, exp), bind (x, tau, gamma), delta)
             end
           | ty (LETX (LETSTAR, nil, exp))      = typeof (exp, gamma, delta)
-          | ty (LAMBDA (lambdaexp))            = raise LeftAsExercise "LAMBDA"
-          | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise "TYLAMBDA"
+          | ty (LAMBDA (lambdaexp))            = raise LeftAsExercise ("LAMBDA: " ^ typeString (ty exp))
+          | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise ("TYLAMBDA: " ^ typeString (ty exp))
           | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise ("TYAPPLY: " ^ typeString (ty exp))
     in
         ty exp

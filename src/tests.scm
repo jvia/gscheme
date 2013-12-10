@@ -36,6 +36,11 @@ a
 (val-rec int a 1979)
 (val-rec (list int) b '(1 2 3 4))
 
+(define int add ((int x) (int y))
+  (+ x y))
+
+(add 3000 7485943)
+
 (val list1 (type-lambda ('a) (lambda (('a x)) ((@ cons 'a) x (@ '() 'a)))))
 ((@ list1 int) 1)
 (val length-int (@ length int))

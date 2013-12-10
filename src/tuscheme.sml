@@ -1979,7 +1979,13 @@ fun elabdef (def, gamma, delta) =
             (gamma', typeString tau)
         end
       | EXP (exp)                       => elabdef (VAL ("it", exp), gamma, delta)
-      | DEFINE (name, tyex, lambda_exp) => raise LeftAsExercise "DEFINE"
+      | DEFINE (name, tyex, (formals,exp)) => 
+        let val taus = map snd formals
+            val funty = funtype (taus, tyex)
+            val lambda = LAMBDA (formals,exp)
+        in
+            elabdef(VALREC(name, funty, lambda), gamma, delta)
+        end
       | USE (name)                      => (gamma, typeString unittype)
 
 (* Type checking                                *)

@@ -4,6 +4,8 @@
 (* this order:                                  *)
 (* <tuscheme.sml>=                              *)
 
+fun flatten (x::xs)  = x ^ " " ^ (flatten xs)
+  | flatten nil      = ""
 
 (*****************************************************************)
 (*                                                               *)
@@ -1875,14 +1877,15 @@ fun getTycon (NUM _)       = inttype
   | getTycon (PRIMITIVE _) = raise TypeError "Primitive type"
 
 fun typeof (exp, gamma, delta) =
-    let fun ty (LITERAL (NIL))         = tyvarA
+    let fun ty (LITERAL (NIL))         = FORALL (["'a"], listtype tyvarA) 
           | ty (LITERAL (NUM num))     = inttype
           | ty (LITERAL (BOOL bool))   = booltype
           | ty (LITERAL (SYM sym))     = symtype
           | ty (LITERAL (PAIR (l,r)))  = getTycon (PAIR (l,r))
           | ty (LITERAL (CLOSURE _))   = raise LeftAsExercise "CLOSURE"
           | ty (LITERAL (PRIMITIVE _)) = raise LeftAsExercise "PRIMITIVE"
-          | ty (VAR name)              = find (name, gamma)
+          | ty (VAR name)              = (find (name, gamma)
+                                         handle NotFound _ => raise TypeError (flatten (map fst gamma)))
           | ty (SET (name, exp)) = 
             let val tau1 = ty exp
                 val tau2 = find(name,gamma) 
@@ -1959,11 +1962,9 @@ fun typeof (exp, gamma, delta) =
                funtype (taus,tau)
             end
           | ty (TYLAMBDA (names,exp))          =
-            let fun flatten (x::xs)  = x ^ (flatten xs)
-                  | flatten nil = ""
-                val types = map (fn _ => TYPE) names
+            let val types = map (fn _ => TYPE) names
                 val delta' = bindList(names, types, delta)
-                val tau = typeof (exp, gamma, delta) 
+                val tau = typeof (exp, gamma, delta') 
             in
                 FORALL (names, tau)
             end

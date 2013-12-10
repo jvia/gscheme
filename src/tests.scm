@@ -49,3 +49,9 @@ a
 (<= 1 2)
 ((@ list1 int) 1)
 ((@ != int) 1 2)
+
+(val identity (type-lambda ('a) (lambda (('a x)) x)))
+(@ '() int)
+((@ identity int) 8008)
+list1
+((@ list1 int) 1)

@@ -1943,12 +1943,16 @@ fun typeof (exp, gamma, delta) =
             in
                 typeof (exp, bindList(vars,taus,gamma), delta)
             end
-          | ty (LETX (LETSTAR, bindings, exp)) = raise LeftAsExercise "LETSTAR"
+          | ty (LETX (LETSTAR, (x,e)::bindings, exp)) =
+            let val tau = ty e
+            in
+                typeof (LETX (LETSTAR, bindings, exp), bind (x, tau, gamma), delta)
+            end
+          | ty (LETX (LETSTAR, nil, exp))      = typeof (exp, gamma, delta)
           | ty (LAMBDA (lambdaexp))            = raise LeftAsExercise "LAMBDA"
           | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise "TYLAMBDA"
-          | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise "TYAPPLY: "
+          | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise ("TYAPPLY: " ^ typeString (ty exp))
     in
-        (* val _ = op ty : exp -> tyexp *)
         ty exp
     end
 

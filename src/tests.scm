@@ -14,7 +14,13 @@
 (set a 5)
 a
 
+;; Let test
 (let ((x 2) (y 3))
+  (+ x y))
+
+;; Let start
+(let* ((x 2)
+      (y (+ x 2)))
   (+ x y))
 
 

@@ -1925,13 +1925,14 @@ fun typeof (exp, gamma, delta) =
                    if eqTypes (actualtypes, args) then
                        result
                    else raise TypeError("Arguments do not match types")
-                 | _  => raise TypeError ""
+                 | (FORALL _ ) => raise TypeError ("Must instantiate a polymorphic function beore using it: "
+                                                   ^ typeString tau)
+                 | _  => raise TypeError ("Invalid function type: " ^ typeString tau)
             end                            
           | ty (LETX (letkind, bindings, exp)) = raise LeftAsExercise "LETX"
-          | ty (LAMBDA (lambdaexp)) = raise LeftAsExercise "LAMNDA"
-          | ty (TYLAMBDA (names,exp)) = raise LeftAsExercise "TYLAMBDA"
-          | ty (TYAPPLY (exp, tylist)) =
-            raise LeftAsExercise "TYAPPLY: "
+          | ty (LAMBDA (lambdaexp))            = raise LeftAsExercise "LAMBDA"
+          | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise "TYLAMBDA"
+          | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise "TYAPPLY: "
     in
         (* val _ = op ty : exp -> tyexp *)
         ty exp

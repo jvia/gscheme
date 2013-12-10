@@ -1923,7 +1923,8 @@ fun typeof (exp, gamma, delta) =
             let val bodytypes = map ty exps
                 fun last tau [] = tau
                   | last tau (h::t) = last h t
-            in last unittype bodytypes
+            in 
+                last unittype bodytypes
             end
           | ty (APPLY (f, actuals)) =
             let val actualtypes = map ty actuals
@@ -1949,7 +1950,15 @@ fun typeof (exp, gamma, delta) =
                 typeof (LETX (LETSTAR, bindings, exp), bind (x, tau, gamma), delta)
             end
           | ty (LETX (LETSTAR, nil, exp))      = typeof (exp, gamma, delta)
-          | ty (LAMBDA (lambdaexp))            = raise LeftAsExercise ("LAMBDA: " ^ typeString (ty exp))
+          | ty (LAMBDA (formals, exp))         = 
+            let val taus = map snd formals
+                val vars = map fst formals
+                fun kind tau = kindof (tau, delta)
+                val kinds = map kind taus
+                val tau = typeof (exp, bindList(vars,taus,gamma), delta)
+            in
+               funtype (taus,tau)
+            end
           | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise ("TYLAMBDA: " ^ typeString (ty exp))
           | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise ("TYAPPLY: " ^ typeString (ty exp))
     in

@@ -1854,38 +1854,25 @@ fun appearsUnprotectedIn (x, e) =
 
 (* <type checking for {\tuscheme} ((prototype))>= *)
 exception LeftAsExercise of string
-
-fun getTycon (NUM _)       = inttype
-  | getTycon (BOOL _)      = booltype
-  | getTycon (SYM  _)      = symtype
-  | getTycon NIL           = tyvarA
-  | getTycon (PAIR (l,r))  =
-    let fun listLiteral (PAIR (lit, NIL)) =  getTycon lit
-          | listLiteral (PAIR (lit, list)) =
-            let val (tau1, tau2) = (getTycon lit, listLiteral list)
-            in
-                if eqType (tau1, tau2) then
-                    tau1
-                else
-                    raise TypeError "List must be homogenous"
-            end
-          | listLiteral _ = raise TypeError "Meep"
-    in
-        listtype (listLiteral (PAIR (l,r)))
-    end
-  | getTycon (CLOSURE _)   = raise TypeError "Clojure: I wish"
-  | getTycon (PRIMITIVE _) = raise TypeError "Primitive type"
-
 fun typeof (exp, gamma, delta) =
     let fun ty (LITERAL (NIL))         = FORALL (["'a"], listtype tyvarA) 
           | ty (LITERAL (NUM num))     = inttype
           | ty (LITERAL (BOOL bool))   = booltype
           | ty (LITERAL (SYM sym))     = symtype
-          | ty (LITERAL (PAIR (l,r)))  = getTycon (PAIR (l,r))
+          | ty (LITERAL (PAIR (l,NIL))) = listtype (ty (LITERAL l))
+          | ty (LITERAL (PAIR (l,r)))  =
+            let fun extract (PAIR (l, r)) = (LITERAL l) :: extract r
+                  | extract _             = [];
+                val types = map ty (extract (PAIR (l,r)))
+                val (tau, taus) = (hd types, tl types)
+                val _ = map (curry eqType tau) taus
+            in
+                listtype tau
+            end
           | ty (LITERAL (CLOSURE _))   = raise LeftAsExercise "CLOSURE"
           | ty (LITERAL (PRIMITIVE _)) = raise LeftAsExercise "PRIMITIVE"
           | ty (VAR name)              = (find (name, gamma)
-                                         handle NotFound _ => raise TypeError (flatten (map fst gamma)))
+                                          handle NotFound _ => raise TypeError (flatten (map fst gamma)))
           | ty (SET (name, exp)) = 
             let val tau1 = ty exp
                 val tau2 = find(name,gamma) 
@@ -1959,7 +1946,7 @@ fun typeof (exp, gamma, delta) =
                 val kinds = map kind taus
                 val tau = typeof (exp, bindList(vars,taus,gamma), delta)
             in
-               funtype (taus,tau)
+                funtype (taus,tau)
             end
           | ty (TYLAMBDA (names,exp))          =
             let val types = map (fn _ => TYPE) names

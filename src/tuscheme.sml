@@ -1959,7 +1959,13 @@ fun typeof (exp, gamma, delta) =
                funtype (taus,tau)
             end
           | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise ("TYLAMBDA: " ^ typeString (ty exp))
-          | ty (TYAPPLY (exp, tylist))         = raise LeftAsExercise ("TYAPPLY: " ^ typeString (ty exp))
+          | ty (TYAPPLY (exp, tylist))         =
+            let val tau = ty exp
+                fun kind tau = kindof (tau, delta)
+                val _ = map kind tylist
+            in 
+                instantiate (tau, tylist, delta)
+            end
     in
         ty exp
     end

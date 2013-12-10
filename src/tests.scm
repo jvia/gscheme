@@ -31,7 +31,6 @@ a
 (= 2 3)
 ((@ = int)  1 1)
 ((@ = bool) #t #t)
-((@ + int)  1 2)
 
 (val-rec int a 1979)
 (val-rec (list int) b '(1 2 3 4))
@@ -41,7 +40,5 @@ a
 
 (add 3000 7485943)
 
-(val list1 (type-lambda ('a) (lambda (('a x)) ((@ cons 'a) x (@ '() 'a)))))
-((@ list1 int) 1)
-(val length-int (@ length int))
 (val cons-bool (@ cons bool))
+(cons-bool #f '(#t #t))

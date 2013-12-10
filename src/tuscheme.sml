@@ -1958,7 +1958,15 @@ fun typeof (exp, gamma, delta) =
             in
                funtype (taus,tau)
             end
-          | ty (TYLAMBDA (names,exp))          = raise LeftAsExercise ("TYLAMBDA: " ^ typeString (ty exp))
+          | ty (TYLAMBDA (names,exp))          =
+            let fun flatten (x::xs)  = x ^ (flatten xs)
+                  | flatten nil = ""
+                val types = map (fn _ => TYPE) names
+                val delta' = bindList(names, types, delta)
+                val tau = typeof (exp, gamma, delta) 
+            in
+                FORALL (names, tau)
+            end
           | ty (TYAPPLY (exp, tylist))         =
             let val tau = ty exp
                 fun kind tau = kindof (tau, delta)
@@ -2570,7 +2578,8 @@ val initialEnvs =
                               (* the same way that types classify expressions. *)
                               nil)
         val envs    = (kinds, types, values)
-        val basis   = 
+        val disable_basis = false
+        val basis   = if disable_basis then [] else
                       (* Further reading                              *)
                       (*                                              *)
                       (* \citetkoenig:anecdote describes an experience with *)

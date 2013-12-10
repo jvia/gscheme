@@ -35,6 +35,9 @@ a
 (val-rec int a 1979)
 (val-rec (list int) b '(1 2 3 4))
 
+(type-lambda ('a) 1)
+(type-lambda ('a 'b 'c 'd) 1)
+
 (define int add ((int x) (int y))
   (+ x y))
 
@@ -42,3 +45,7 @@ a
 
 (val cons-bool (@ cons bool))
 (cons-bool #f '(#t #t))
+
+(<= 1 2)
+((@ list1 int) 1)
+((@ != int) 1 2)

@@ -4,9 +4,6 @@
 (* this order:                                  *)
 (* <tuscheme.sml>=                              *)
 
-fun flatten (x::xs)  = x ^ " " ^ (flatten xs)
-  | flatten nil      = ""
-
 (*****************************************************************)
 (*                                                               *)
 (*   ENVIRONMENTS                                                *)
@@ -1869,10 +1866,9 @@ fun typeof (exp, gamma, delta) =
             in
                 listtype tau
             end
-          | ty (LITERAL (CLOSURE _))   = raise LeftAsExercise "CLOSURE"
-          | ty (LITERAL (PRIMITIVE _)) = raise LeftAsExercise "PRIMITIVE"
-          | ty (VAR name)              = (find (name, gamma)
-                                          handle NotFound _ => raise TypeError (flatten (map fst gamma)))
+          | ty (LITERAL (CLOSURE _))   = raise TypeError "Received a closure"
+          | ty (LITERAL (PRIMITIVE _)) = raise TypeError "Received a primitive"
+          | ty (VAR name)              = find (name, gamma)
           | ty (SET (name, exp)) = 
             let val tau1 = ty exp
                 val tau2 = find(name,gamma) 
@@ -1988,7 +1984,7 @@ fun elabdef (def, gamma, delta) =
         in
             elabdef(VALREC(name, funty, lambda), gamma, delta)
         end
-      | USE (name)                      => (gamma, typeString unittype)
+      | USE (name)                      => raise RuntimeError "Cannot use 'use' here"
 
 (* Type checking                                *)
 (*                                              *)
@@ -2431,8 +2427,7 @@ and readCheckEvalPrint (defs, echo, errmsg) envs =
                      | Overflow          => continue "Arithmetic overflow"
                      | RuntimeError msg  => continue ("run-time error: " ^ msg)
                      | NotFound n        => continue ("variable " ^ n ^ " not found")
-                     | LeftAsExercise msg => continue ("LeftAsExercise: " ^ msg)
-                                                      (* Exceptions [[Div]] and [[Overflow]] are predefined. *)
+                                                     (* Exceptions [[Div]] and [[Overflow]] are predefined. *)
 
             end
     in  streamFold processDef envs defs

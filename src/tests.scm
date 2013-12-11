@@ -1,60 +1,62 @@
-;; 1
-;; #t
-;; '()
-;; '(1)
-;; '(1 #t)
-;; '(1 2)
-;; '((1) (2 3))
-;; '((1) (4) (2 3))
-;; '((1) () (2 3))
-;; (if #t (begin 1) (begin 2))
-;; (if #t (begin 1) (begin #f))
-;; (while #f 2)
-;; (val a 2)
-;; (set a 5)
-;; a
+(define bool assert= (('a x) ('a y)) ((@ = 'a) x y))
 
-;; ;; Let test
-;; (let ((x 2) (y 3))
-;;   (+ x y))
+((@ assert= int) 1 1)
+#t
+'()
+'(1)
+'(1 #t)
+'(1 2)
+'((1) (2 3))
+'((1) (4) (2 3))
+'((1) () (2 3))
+(if #t (begin 1) (begin 2))
+(if #t (begin 1) (begin #f))
+(while #f 2)
+(val a 2)
+(set a 5)
+a
 
-;; ;; Let start
-;; (let* ((x 2)
-;;        (y (+ x 2)))
-;;   (+ x y))
+;; Let test
+(let ((x 2) (y 3))
+  (+ x y))
 
-;; (lambda ((int x))
-;;   (+ x x)) 
+;; Let start
+(let* ((x 2)
+       (y (+ x 2)))
+  (+ x y))
 
-;; (+ 2 2)
-;; (- 3 1)
-;; (= 2 3)
-;; ((@ = int)  1 1)
-;; ((@ = bool) #t #t)
+(lambda ((int x))
+  (+ x x)) 
 
-;; (val-rec int a 1979)
-;; (val-rec (list int) b '(1 2 3 4))
+(+ 2 2)
+(- 3 1)
+(= 2 3)
+((@ = int)  1 1)
+((@ = bool) #t #t)
 
-;; (type-lambda ('a) 1)
-;; (type-lambda ('a 'b 'c 'd) 1)
+(val-rec int a 1979)
+(val-rec (list int) b '(1 2 3 4))
 
-;; (define int add ((int x) (int y))
-;;   (+ x y))
+(type-lambda ('a) 1)
+(type-lambda ('a 'b 'c 'd) 1)
 
-;; (add 3000 7485943)
+(define int add ((int x) (int y))
+  (+ x y))
 
-;; (val cons-bool (@ cons bool))
-;; (cons-bool #f '(#t #t))
+(add 3000 7485943)
 
-;; (<= 1 2)
-;; ((@ list1 int) 1)
-;; ((@ != int) 1 2)
+(val cons-bool (@ cons bool))
+(cons-bool #f '(#t #t))
 
-;; (val identity (type-lambda ('a) (lambda (('a x)) x)))
-;; (@ '() int)
-;; ((@ identity int) 8008)
-;; list1
-;; ((@ list1 int) 1)
+(<= 1 2)
+((@ list1 int) 1)
+((@ != int) 1 2)
+
+(val identity (type-lambda ('a) (lambda (('a x)) x)))
+(@ '() int)
+((@ identity int) 8008)
+list1
+((@ list1 int) 1)
 
 (val e1 (type-lambda ('a) (lambda (('a x)) (if x (+ 1 1) (< 1 0)))))
 ;; type error
@@ -73,3 +75,23 @@
 
 (val e5 ((@ list3 sym) 'a 'b 'c))
 ;; (list sym)
+
+(define bool eq2 ((int x))
+  ((@ = int) x 2))
+
+
+(let ((existsint? (@ exists? int))
+      (allint? (@ all? int))
+      (lst1 '(1 2 3 4 5))
+      (lst2 '(2 2 2 2 2))
+      (lst3 '(5)))
+  ((@ list3 (list bool))
+   ((@ list2 bool)
+    (existsint? eq2 lst1)
+    (allint? eq2 lst1))
+   ((@ list2 bool)
+    (existsint? eq2 lst2)
+    (allint? eq2 lst2))
+   ((@ list2 bool)
+    (existsint? eq2 lst3)
+    (allint? eq2 lst3))))

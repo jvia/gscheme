@@ -15,12 +15,15 @@
 \newcommand{\LITERAL}[1]{\text{LITERAL}(#1)}%
 \newcommand{\FOR}[4]{\text{FOR}(#1,#2,#3,#4)}%
 \newcommand{\EVAL}[0]{\Downarrow}%
+\newcommand{\INT}[0]{\text{int}}%
+\newcommand{\BOOL}[0]{\text{bool}}%
 \newcommand{\APPLY}[2]{\text{APPLY}(#1,#2)}%
 \newcommand{\LIST}[1]{\text{LIST}(#1)}%
-\newcommand{\TYPEENV}[1]{\Gamma_\xi,\Gamma_\phi,\Gamma_\rho \vdash\;}%
+\newcommand{\TYPEENV}[0]{\Gamma_{\xi}, \Gamma_{\phi}, \Gamma_{\rho} \vdash}%
 
 \author{Jeremiah Via \& Thomas Donahue}
 \title{COMP105 --- Homework 05}
+\date{}
 
 \begin{document}
 \maketitle
@@ -43,6 +46,36 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \section{Introduction}
 
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{\textsc{(IntList)}}
+  \UnaryInfC{$\TYPEENV \text{INTNIL} : \LIST{\INT}$}
+\end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{}
+  \RightLabel{\textsc{(BoolList)}}
+  \UnaryInfC{$\TYPEENV \text{BOOLNIL} : \LIST{\BOOL}$}
+\end{prooftree}
+
+% \begin{prooftree}
+%   \AxiomC{}
+%   \RightLabel{\textsc{(ArrIntList)}}
+%   \UnaryInfC{$\TYPEENV \text{ARRINTNIL} : \LIST{\text{ARR}(\INT)}$}
+% \end{prooftree}
+
+% \begin{prooftree}
+%   \AxiomC{}
+%   \RightLabel{\textsc{(ArrIntList)}}
+%   \UnaryInfC{$\TYPEENV \text{ARRINTNIL} : \LIST{\text{ARR}(\INT)}$}
+% \end{prooftree}
+
+\begin{prooftree}
+  \AxiomC{$\TYPEENV e_1 : \tau \qquad \TYPEENV e_2 : \LIST{\tau}$}
+  \RightLabel{\textsc{(Cons)}}
+  \UnaryInfC{$\TYPEENV \text{CONS}(e_1,e_2) : \LIST{\tau}$}
+\end{prooftree}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 % Elimination
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
@@ -50,165 +83,19 @@
 
 \begin{prooftree}
   \AxiomC{$\TYPEENV e : \LIST{\tau}$}
+  \RightLabel{\textsc{(Car)}}
   \UnaryInfC{$\TYPEENV \text{CAR}(e) : \tau$}
 \end{prooftree}
 
-\section*{Question 10}
 \begin{prooftree}
-  %% PREMISE LEFT SIDE
-  \AxiomC{$x \notin \text{dom }p_0$}
-  \AxiomC{$x \in \text{dom }\xi_0$}
-  \AxiomC{}
-  \UnaryInfC{$\langle\text{LITERAL}(3), \xi_0, \phi, \rho_0 \rangle$}
-  \TrinaryInfC{$\langle\text{SET } x \; 3, \xi_0, \phi, \rho_0 \rangle \Downarrow \langle 3, \xi_1\{x \rightarrow 3\}, \phi, \rho_1 \rangle$}
-  %% PREMISE RIGHT SIDE
-  \AxiomC{$x \notin \text{dom } \rho_1$}
-  \AxiomC{$x \in \text{dom } \xi_1$}
-  \BinaryInfC{$\langle \text{VAR}(x), \xi_1, \phi, \rho_1\rangle \Downarrow \langle 3, \xi_1, \phi, \rho_0 \rangle$}
-  %% CONCLUSION
-  \BinaryInfC{$\langle\text{BEGIN}(\text{SET } x\; 3, \text{VAR}(x)), \xi_0, \phi, \rho_0 \rangle   \Downarrow \langle 3, \xi_1, \phi, \rho_1 \rangle$}
+  \AxiomC{$\TYPEENV e : \LIST{\tau}$}
+  \RightLabel{\textsc{(Cdr)}}
+  \UnaryInfC{$\TYPEENV \text{CDR}(e) : \LIST{\tau}$}
 \end{prooftree}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% Question 11 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\newpage
-\section*{Question 11}
-If
 \begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \in \xi$}
-  \BinaryInfC{$\STATE{\VAR{x}}{\xi}{\phi}{\rho} \Downarrow \STATE{v_1}{\xi}{\phi}{\rho}$}
-
-  \AxiomC{$v_1 \neq 0$}
-
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \in \DOM{\rho}$}
-  \BinaryInfC{$\STATE{\VAR{x}}{\xi}{\phi}{\rho} \Downarrow \STATE{v_1}{\xi}{\phi}{\rho}$}
-
-  \TrinaryInfC{$\STATE{\IF{\VAR{x}}{\VAR{x}}{\LITERAL{0}}}{\xi}{\phi}{\rho} \Downarrow \STATE{v_1}{\xi}{\phi}{\rho}$}
+  \AxiomC{$\TYPEENV e : \LIST{\tau}$}
+  \RightLabel{\textsc{(Empty?)}}
+  \UnaryInfC{$\TYPEENV \textsc{EMPTY?}(e) : \BOOL$}
 \end{prooftree}
-or
-\begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \in \xi$}
-  \BinaryInfC{$\STATE{\VAR{x}}{\xi}{\phi}{\rho} \Downarrow \STATE{v_1}{\xi}{\phi}{\rho}$}
-
-  \AxiomC{$v_1 = 0$}
-
-  \AxiomC{}
-  \UnaryInfC{$\STATE{\LITERAL{0}}{\xi}{\phi}{\rho} \Downarrow \STATE{0}{\xi}{\phi}{\rho}$}
-
-  \TrinaryInfC{$\STATE{\IF{\VAR{x}}{\VAR{x}}{\LITERAL{0}}}{\xi}{\phi}{\rho} \Downarrow \STATE{v_1}{\xi}{\phi}{\rho}$}
-\end{prooftree}
-and
-\begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \in \DOM{\phi}$}
-  \BinaryInfC{$\STATE{\VAR{x}}{\xi}{\phi}{\rho} \Downarrow \STATE{v_2}{\xi'}{\phi}{\rho'}$}
-\end{prooftree}
-then
-$v_1=v_2$
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% Question 13
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\newpage
-\section*{Question 13}
-\subsection*{a)}
-
-\begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \notin \DOM{\xi}$}
-  \RightLabel{\textsc{(AwkVar)}}
-  \BinaryInfC{$\STATE{\VAR{x}}{\xi}{\phi}{\rho} \Downarrow \STATE{0}{\xi'\{x \mapsto 0\}}{\phi}{\rho}$}
-\end{prooftree}
-\vspace{1cm}
-\begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \notin \DOM{\xi}$}
-  \AxiomC{$\STATE{e}{\xi}{\phi}{\rho} \Downarrow \STATE{v}{\xi'}{\phi}{\rho'}$}
-  \RightLabel{\textsc{(AwkSet)}}
-  \TrinaryInfC{$\STATE{\SET{x}{e}}{\xi}{\phi}{\rho} \Downarrow \STATE{v}{\xi'\{x \mapsto v\}}{\phi}{\rho'}$}
-\end{prooftree}
-
-\subsection*{b)}
-
-\begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \notin \DOM{\xi}$}
-  \RightLabel{\textsc{(IconVar)}}
-  \BinaryInfC{$\STATE{\VAR{x}}{\xi}{\phi}{\rho} \Downarrow \STATE{0}{\xi}{\phi}{\rho'\{x \mapsto 0\}}$}
-\end{prooftree}
-\vspace{1cm}
-\begin{prooftree}
-  \AxiomC{$x \notin \DOM{\rho}$}
-  \AxiomC{$x \notin \DOM{\xi}$}
-  \AxiomC{$\STATE{e}{\xi}{\phi}{\rho} \Downarrow \STATE{v}{\xi'}{\phi}{\rho'}$}
-  \RightLabel{\textsc{(IconSet)}}
-  \TrinaryInfC{$\STATE{\SET{x}{e}}{\xi}{\phi}{\rho} \Downarrow \STATE{v}{\xi'}{\phi}{\rho'\{x \mapsto v\}}$}
-\end{prooftree}
-
-\subsection*{c)}
-I prefer Icon because implicitly created variables have a shorter
-scope. In any sufficiently sized program, this behavior will be easier
-to reason about.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% Question 16
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\newpage
-\section*{Question 16}
-Yes, it is possible to modify the environment $\rho$ without a
-\textsc{Set} node. A trivial example that demonstrates this behavior
-is applying the identity function $I$ to the literal 1. 
-
-\begin{prooftree}
-  \AxiomC{$\phi(I) = USER(\langle x \rangle, e)$}
-
-  \AxiomC{}
-  \UnaryInfC{$\STATE{\LITERAL{1}}{\xi}{\phi}{\rho_0} \EVAL \STATE{1}{\xi}{\phi}{\rho_0}$}
-
-  \AxiomC{$\STATE{e}{\xi}{\phi}{\rho_0\{x \mapsto 1\}} \EVAL \STATE{1}{\xi}{\phi}{\rho_1}$}
-  \TrinaryInfC{$\STATE{\APPLY{I}{\LITERAL{1}}}{\xi}{\phi}{\rho_0} \EVAL \STATE{1}{\xi}{\phi}{\rho_1}$}
-\end{prooftree}
-
-In this trivial case, we can see that $\rho$ is modified and thus it
-is possible to modify an environment without explicitly using
-\textsc{Set}.
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-% Question 17
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\newpage
-\section*{Question 17}
-
-\begin{prooftree}
-  \AxiomC{$\STATE{e_2}{\xi}{\phi}{\rho} \Downarrow \STATE{v_1}{\xi'}{\phi}{\rho'}$}
-  \AxiomC{$v_1=0$}
-  \RightLabel{\textsc{(ForEnd)}}
-  \BinaryInfC{$\STATE{\FOR{e_1}{e_2}{e_3}{e_4}}{\xi}{\phi}{\rho} \Downarrow \STATE{0}{\xi'}{\phi}{\rho'}$}  
-\end{prooftree}
-
-\vspace{1cm}
-
-\begin{prooftree}
-  %% e1 & e2 & v
-  \AxiomC{$\STATE{e_1}{\xi_1}{\phi}{\rho_1} \EVAL \STATE{v_1}{\xi_2}{\phi}{\rho_2}$}
-  \noLine
-  \UnaryInfC{$\STATE{e_2}{\xi_2}{\phi}{\rho_2} \EVAL \STATE{v_2}{\xi_3}{\phi}{\rho_3}$}
-  \noLine
-  \UnaryInfC{$v_2 \neq 0$}
-  \noLine
-  %% e3 & e4
-  \UnaryInfC{$\STATE{e_4}{\xi_3}{\phi}{\rho_3} \EVAL \STATE{v_3}{\xi_4}{\phi}{\rho_4}$}
-  \noLine
-  \UnaryInfC{$\STATE{e_3}{\xi_4}{\phi}{\rho_4} \EVAL \STATE{v_4}{\xi_5}{\phi}{\rho_5}$}
-
-
-  %% recursion
-  \AxiomC{$\STATE{\FOR{e_1}{e_2}{e_3}{e_4}}{\xi_5}{\phi}{\rho_5} \EVAL \STATE{v_5}{\xi_6}{\phi}{\rho_6}$}
-  \RightLabel{\textsc{(ForIterate)}}
-  \BinaryInfC{$\STATE{\FOR{e_1}{e_2}{e_3}{e_4}}{\xi_1}{\phi}{\rho_1} \Downarrow \STATE{v_5}{\xi_6}{\phi}{\rho_6}$}
-\end{prooftree}
-
 \end{document}

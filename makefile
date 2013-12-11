@@ -9,6 +9,9 @@ test-timpcore: timpcore
 test-tuscheme: tuscheme
 	cat src/tests.scm | ./src/tuscheme -q
 
+test-11: tuscheme
+	cat src/11.scm | ./src/tuscheme -q
+
 timpcore: src/timpcore.sml
 	mlton src/timpcore.sml
 

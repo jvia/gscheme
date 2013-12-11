@@ -4,9 +4,6 @@
 ;; type error
 (val e3 (and ((@ != int) 1 2) ((@ != sym) 'a 'b)))
 ;; type is bool
-(val list3 (type-lambda ('a)
-                        (lambda (('a x) ('a y) ('a z))
-                          ((@ cons 'a) x ((@ list2 'a) y z)))))
 
 (val e4 (let ((sym=a (((@ curry sym sym bool) (@ = sym)) 'a))
               (mapsym (@ map sym bool)))
